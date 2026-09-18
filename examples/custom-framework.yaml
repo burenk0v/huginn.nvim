@@ -1,0 +1,18 @@
+# Example for a team with a custom pytest-based framework.
+# Huginn intentionally does not hard-code framework-specific conventions.
+
+python:
+  package_manager: poetry
+  formatter: ruff
+  linter: ruff
+  type_checker: ty
+
+testing:
+  runner: pytest
+  profiles:
+    default:
+      - tests
+    api:
+      - tests/api
+      - --framework-config
+      - config/api.yaml
