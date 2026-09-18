@@ -48,7 +48,8 @@
           "additionalProperties": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "minLength": 1
             }
           }
         }
@@ -72,7 +73,8 @@
         "instructions": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "minLength": 1
           }
         },
         "providers": {
@@ -104,7 +106,8 @@
                     "type": "string",
                     "enum": [
                       "oidc"
-                    ]
+                    ],
+                    "minLength": 1
                   },
                   "issuer": {
                     "type": "string",
@@ -118,9 +121,17 @@
                     "type": "string",
                     "minLength": 1
                   }
-                }
+                },
+                "required": [
+                  "type",
+                  "issuer",
+                  "client_id"
+                ]
               }
-            }
+            },
+            "required": [
+              "type"
+            ]
           }
         },
         "usage": {
