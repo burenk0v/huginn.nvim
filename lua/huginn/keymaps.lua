@@ -24,9 +24,14 @@ end
 
 local function ai_provider()
   local cfg = config.get()
+  if not cfg.ai.enabled then
+    vim.notify("Huginn: AI integration is disabled", vim.log.levels.WARN)
+    return nil
+  end
+
   local provider = cfg.ai.providers[cfg.ai.provider]
   if not provider then
-    vim.notify(("Huginn: unknown AI provider '%s'"):format(cfg.ai.provider), vim.log.levels.ERROR)
+    vim.notify(("Huginn: AI provider '%s' is not configured for authentication"):format(cfg.ai.provider), vim.log.levels.ERROR)
     return nil
   end
   return cfg.ai.provider, provider
@@ -56,6 +61,10 @@ function M.setup()
 
   vim.keymap.set("n", "<leader>tr", function() require("neotest").run.run() end, { desc = "Run nearest test" })
   vim.keymap.set("n", "<leader>td", function() require("neotest").run.run({ strategy = "dap" }) end, { desc = "Debug nearest test" })
+
+  if not config.get().ai.enabled then
+    return
+  end
 
   vim.keymap.set("n", "<leader>aa", "<cmd>CodeCompanionActions<cr>", { desc = "AI actions" })
   vim.keymap.set("v", "<leader>ac", "<cmd>CodeCompanionChat<cr>", { desc = "AI chat" })
