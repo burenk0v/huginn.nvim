@@ -67,6 +67,10 @@ ai:
         type: oidc
         issuer: https://login.example.test
         client_id: huginn
+  usage:
+    # Optional session budget and blended price per 1M tokens.
+    budget_tokens: 0
+    cost_per_million_tokens: 0
 ```
 
 The schema is available at `config/schema.json` and is associated with `.sdet.yaml` through yaml-language-server.
@@ -116,9 +120,7 @@ ai:
 
 Run `:HuginnAIAuth` to open the corporate login page. Huginn starts a temporary localhost callback, receives the authorization code, exchanges it for tokens, and stores the credential outside the repository.
 
-Authentication commands:
-
-- `:HuginnAIAuth` — authenticate the configured provider in a browser
+Usage is intentionally lightweight: CodeCompanion-reported token usage is counted for the current Neovim session. If the provider does not report usage, Huginn falls back to CodeCompanion's estimate. Set `ai.usage.budget_tokens` and `ai.usage.cost_per_million_tokens` to see remaining session budget and an estimated cost.\n\n- `:HuginnAIUsage` — show requests, tokens, estimated cost and remaining configured budget.\n\nAuthentication commands:\n\n- `:HuginnAIAuth` — authenticate the configured provider in a browser
 - `:HuginnAIStatus` — show authentication status
 - `:HuginnAILogout` — remove the locally stored credential
 
