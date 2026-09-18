@@ -9,8 +9,7 @@
       "additionalProperties": false,
       "properties": {
         "package_manager": {
-          "type": "string",
-          "minLength": 1
+          "type": "string"
         },
         "formatter": {
           "type": "string"
@@ -27,9 +26,22 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "runner": {
+        "framework": {
           "type": "string",
           "minLength": 1
+        },
+        "frameworks": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "runner": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
         },
         "profiles": {
           "type": "object",
@@ -39,10 +51,6 @@
               "type": "string"
             }
           }
-        },
-        "framework": {
-          "type": "string",
-          "minLength": 1
         }
       }
     },
