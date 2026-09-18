@@ -101,6 +101,8 @@ The command-generation layer is isolated in `lua/huginn/testing.lua`, so command
 
 AI integration is provider-oriented. Huginn can connect to OpenAI-compatible endpoints and can authenticate desktop users through standard OIDC Authorization Code + PKCE.
 
+Set `ai.enabled: false` to disable CodeCompanion, AI keymaps and Huginn AI commands entirely.
+
 Example provider configuration:
 
 ```yaml
@@ -120,7 +122,13 @@ ai:
 
 Run `:HuginnAIAuth` to open the corporate login page. Huginn starts a temporary localhost callback, receives the authorization code, exchanges it for tokens, and stores the credential outside the repository.
 
-Usage is intentionally lightweight: CodeCompanion-reported token usage is counted for the current Neovim session. If the provider does not report usage, Huginn falls back to CodeCompanion's estimate. Set `ai.usage.budget_tokens` and `ai.usage.cost_per_million_tokens` to see remaining session budget and an estimated cost.\n\n- `:HuginnAIUsage` — show requests, tokens, estimated cost and remaining configured budget.\n\nAuthentication commands:\n\n- `:HuginnAIAuth` — authenticate the configured provider in a browser
+Usage is intentionally lightweight: CodeCompanion-reported token usage is counted for the current Neovim session. If the provider does not report usage, Huginn falls back to CodeCompanion's estimate. Set `ai.usage.budget_tokens` and `ai.usage.cost_per_million_tokens` to see remaining session budget and an estimated cost.
+
+- `:HuginnAIUsage` — show requests, tokens, estimated cost and remaining configured budget.
+
+Authentication commands:
+
+- `:HuginnAIAuth` — authenticate the configured provider in a browser
 - `:HuginnAIStatus` — show authentication status
 - `:HuginnAILogout` — remove the locally stored credential
 
