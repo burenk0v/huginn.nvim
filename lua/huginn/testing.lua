@@ -29,8 +29,9 @@ function M.build_command(args)
     return nil
   end
 
+  local options = cfg.testing.frameworks[cfg.testing.framework] or {}
   local command = command_prefix(cfg.python.package_manager)
-  local framework_command = adapter.build_command(cfg, args)
+  local framework_command = adapter.build_command(options, args)
 
   for _, arg in ipairs(framework_command) do
     table.insert(command, arg)
