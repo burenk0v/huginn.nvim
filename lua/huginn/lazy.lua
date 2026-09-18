@@ -23,6 +23,7 @@ local neotest_dependencies = {
   "nvim-treesitter/nvim-treesitter",
 }
 vim.list_extend(neotest_dependencies, framework.neotest_plugins())
+vim.list_extend(neotest_dependencies, framework.neotest_debug_plugins())
 
 require("lazy").setup({
   {
@@ -87,9 +88,6 @@ require("lazy").setup({
         python = linter ~= "" and { linter } or {},
       }
     end,
-  },
-  {
-    "mfussenegger/nvim-dap",
   },
   {
     "nvim-neotest/neotest",
