@@ -76,10 +76,14 @@ function M.logout(provider)
   local data = read_all()
   data[provider] = nil
   if next(data) then
-    write_all(data)
-  else
-    pcall(os.remove, storage_path())
+    return write_all(data)
   end
+
+  local ok = os.remove(storage_path())
+  if ok then
+    return true
+  end
+  return vim.fn.filereadable(storage_path()) ~= 1
 end
 
 local function random_hex(bytes)
@@ -173,7 +177,9 @@ local function exchange_code(provider_name, client_id, redirect_uri, verifier, t
       expires_in = expires_in,
       expires_at = expires_in and expires_in > 0 and (os.time() + expires_in) or nil,
     }
-    write_all(data)
+    if not write_all(data) then
+      return
+    end
     vim.notify("Huginn: AI authentication successful", vim.log.levels.INFO)
   end)
 end

@@ -122,8 +122,9 @@ function M.setup()
   vim.api.nvim_create_user_command("HuginnAILogout", function()
     local name = ai_provider()
     if name then
-      auth.logout(name)
-      vim.notify(("Huginn: logged out from AI provider '%s'"):format(name), vim.log.levels.INFO)
+      if auth.logout(name) then
+        vim.notify(("Huginn: logged out from AI provider '%s'"):format(name), vim.log.levels.INFO)
+      end
     end
   end, { desc = "Remove locally stored Huginn AI credentials" })
 end
