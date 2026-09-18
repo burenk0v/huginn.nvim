@@ -67,14 +67,20 @@ assert_equal(table.concat(command, " "), "pytest tests/unit", "framework command
 local file_command = testing.build_command({ "tests/test_example.py" })
 assert_equal(table.concat(file_command, " "), "pytest tests/test_example.py", "current file command")
 
-framework.register("custom", {
+local plugins = framework.neotest_plugins()
+assert_equal(#plugins, 1, "neotest plugin count")
+assert_equal(plugins[1], "nvim-neotest/neotest-python", "pytest neotest plugin")
+
+local custom_adapter = {
   build_command = function(_, args)
     return vim.list_extend({ "custom-runner" }, vim.deepcopy(args))
   end,
-})
+}
+framework.register("custom", custom_adapter)
 cfg.testing.framework = "custom"
 local custom_command = testing.build_profile_command("unit")
 assert_equal(table.concat(custom_command, " "), "custom-runner tests/unit", "custom framework adapter")
+assert_equal(framework.neotest_adapter("custom", cfg), nil, "framework without neotest adapter")
 
 local names = vim.fn.getcompletion("", "file")
 assert_true(type(names) == "table", "headless runtime")
