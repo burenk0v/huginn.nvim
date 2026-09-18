@@ -42,11 +42,11 @@ function M.logout(provider)
 end
 
 local function random_hex(bytes)
-  local result = {}
-  for _ = 1, bytes do
-    result[#result + 1] = ("%02x"):format(math.random(0, 255))
+  local result = vim.fn.system(("openssl rand -hex %d"):format(bytes))
+  if vim.v.shell_error ~= 0 then
+    return nil
   end
-  return table.concat(result)
+  return vim.trim(result)
 end
 
 local function pkce_challenge(verifier)
@@ -135,6 +135,12 @@ function M.login(name, provider)
   end
 
   local verifier = random_hex(32)
+  local state = random_hex(24)
+  if not verifier or not state then
+    vim.notify("Huginn: OpenSSL is required for secure OIDC authentication", vim.log.levels.ERROR)
+    return
+  end
+
   local challenge = pkce_challenge(verifier)
   if not challenge then
     vim.notify("Huginn: OpenSSL is required for OIDC PKCE", vim.log.levels.ERROR)
@@ -152,7 +158,6 @@ function M.login(name, provider)
       return
     end
 
-    local state = random_hex(24)
     local script = [[
 import http.server
 import urllib.parse
