@@ -6,6 +6,7 @@ function M.register(name, adapter)
   assert(type(name) == "string" and name ~= "", "framework adapter name must be a non-empty string")
   assert(type(adapter) == "table", "framework adapter must be a table")
   assert(type(adapter.build_command) == "function", "framework adapter must provide build_command")
+  assert(adapters[name] == nil, ("framework adapter '%s' is already registered"):format(name))
   adapters[name] = adapter
 end
 
@@ -54,14 +55,25 @@ function M.neotest_debug_plugins()
   return plugins
 end
 
-function M.neotest_adapter(name, cfg)
+function M.neotest_adapter(name, options)
   local adapter = M.get(name)
   local neotest = adapter and adapter.neotest
   if not neotest or type(neotest.setup) ~= "function" then
     return nil
   end
 
-  return neotest.setup(cfg)
+  return neotest.setup(options or {})
+end
+
+function M.has_neotest(name)
+  local adapter = M.get(name)
+  return adapter and type(adapter.neotest) == "table" and type(adapter.neotest.setup) == "function" or false
+end
+
+function M.filetypes(name)
+  local adapter = M.get(name)
+  local filetypes = adapter and adapter.filetypes or {}
+  return vim.deepcopy(filetypes)
 end
 
 function M.supports_debug(name)
@@ -71,8 +83,10 @@ function M.supports_debug(name)
 end
 
 M.register("pytest", {
-  build_command = function(cfg, args)
-    local command = { cfg.testing.runner }
+  filetypes = { "python" },
+
+  build_command = function(options, args)
+    local command = { options.runner or "pytest" }
     for _, arg in ipairs(args or {}) do
       table.insert(command, arg)
     end
@@ -81,8 +95,8 @@ M.register("pytest", {
 
   neotest = {
     plugins = { "nvim-neotest/neotest-python" },
-    setup = function(cfg)
-      return require("neotest-python")({ runner = cfg.testing.runner })
+    setup = function(options)
+      return require("neotest-python")({ runner = options.runner or "pytest" })
     end,
     debug = {
       supported = true,
