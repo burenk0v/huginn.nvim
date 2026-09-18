@@ -128,6 +128,21 @@ assert_equal(config.get().ai.enabled, false, "unsupported AI provider type disab
 write(root .. "/project/.sdet.yaml", [[
 ai:
   enabled: true
+  provider: corporate
+  providers:
+    corporate:
+      type: openai_compatible
+      auth:
+        type: oidc
+        issuer: https://login.example.test
+        client_id: huginn
+]])
+config.setup()
+assert_equal(config.get().ai.enabled, false, "missing AI provider endpoint disables AI")
+
+write(root .. "/project/.sdet.yaml", [[
+ai:
+  enabled: true
   provider: openai
 ]])
 config.setup()
