@@ -103,6 +103,9 @@ require("lazy").setup({
   },
   {
     "olimorris/codecompanion.nvim",
+    enabled = function()
+      return config.get().ai.enabled
+    end,
     dependencies = {
       "nvim-lua/plenary.nvim",
     },
@@ -150,4 +153,6 @@ require("lazy").setup({
   checker = { enabled = true },
 })
 
-usage.setup()
+if config.get().ai.enabled then
+  usage.setup()
+end
