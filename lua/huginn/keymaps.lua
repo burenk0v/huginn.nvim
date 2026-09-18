@@ -41,7 +41,7 @@ function M.setup()
   vim.keymap.set("n", "<leader>tt", function() run_profile("default") end, { desc = "Run default test profile" })
 
   vim.keymap.set("n", "<leader>tf", function()
-    run_command({ config.get().testing.runner, vim.fn.expand("%:p") })
+    run_command({ vim.fn.expand("%:p") })
   end, { desc = "Run current test file" })
 
   vim.keymap.set("n", "<leader>tp", function()
@@ -55,7 +55,7 @@ function M.setup()
   vim.keymap.set("n", "<leader>ta", function()
     local args = vim.fn.input("test args: ")
     if args ~= "" then
-      run_command(vim.list_extend({ config.get().testing.runner }, testing.split_args(args)))
+      run_command(testing.split_args(args))
     end
   end, { desc = "Run tests with arguments" })
 
