@@ -18,6 +18,7 @@ M.defaults = {
     provider = "openai",
     model = "gpt-5",
     instructions = {},
+    providers = {},
   },
 }
 
@@ -51,136 +52,122 @@ local function validate_profiles(value)
   if type(value) ~= "table" or vim.tbl_islist(value) then
     return false, "testing.profiles must be an object"
   end
-
   for name, profile in pairs(value) do
-    if type(name) ~= "string" or name == "" then
-      return false, "testing.profiles keys must be non-empty strings"
-    end
+    if type(name) ~= "string" or name == "" then return false, "testing.profiles keys must be non-empty strings" end
     if type(profile) ~= "table" or not vim.tbl_islist(profile) then
       return false, ("testing.profiles.%s must be an array"):format(name)
     end
     for index, arg in ipairs(profile) do
       local ok, err = validate_string(arg, ("testing.profiles.%s[%d]"):format(name, index))
-      if not ok then
-        return false, err
-      end
+      if not ok then return false, err end
     end
   end
+  return true
+end
 
+local function validate_auth(provider_name, auth)
+  if type(auth) ~= "table" or vim.tbl_islist(auth) then
+    return false, ("ai.providers.%s.auth must be an object"):format(provider_name)
+  end
+  for key in pairs(auth) do
+    if key ~= "type" and key ~= "issuer" and key ~= "client_id" and key ~= "scope" then
+      return false, ("unknown key 'ai.providers.%s.auth.%s'"):format(provider_name, key)
+    end
+  end
+  local ok, err = validate_string(auth.type, ("ai.providers.%s.auth.type"):format(provider_name))
+  if not ok then return false, err end
+  if auth.type == "oidc" then
+    ok, err = validate_string(auth.issuer, ("ai.providers.%s.auth.issuer"):format(provider_name))
+    if not ok then return false, err end
+    ok, err = validate_string(auth.client_id, ("ai.providers.%s.auth.client_id"):format(provider_name))
+    if not ok then return false, err end
+    if auth.scope then
+      ok, err = validate_string(auth.scope, ("ai.providers.%s.auth.scope"):format(provider_name))
+      if not ok then return false, err end
+    end
+  end
+  return true
+end
+
+local function validate_ai_providers(value)
+  if type(value) ~= "table" or vim.tbl_islist(value) then return false, "ai.providers must be an object" end
+  for name, provider in pairs(value) do
+    if type(name) ~= "string" or name == "" or type(provider) ~= "table" or vim.tbl_islist(provider) then
+      return false, "ai.providers must contain named objects"
+    end
+    for key in pairs(provider) do
+      if key ~= "type" and key ~= "endpoint" and key ~= "model" and key ~= "auth" then
+        return false, ("unknown key 'ai.providers.%s.%s'"):format(name, key)
+      end
+    end
+    local ok, err = validate_string(provider.type, ("ai.providers.%s.type"):format(name))
+    if not ok then return false, err end
+    if provider.endpoint then
+      ok, err = validate_string(provider.endpoint, ("ai.providers.%s.endpoint"):format(name))
+      if not ok then return false, err end
+    end
+    if provider.model then
+      ok, err = validate_string(provider.model, ("ai.providers.%s.model"):format(name))
+      if not ok then return false, err end
+    end
+    if provider.auth then
+      ok, err = validate_auth(name, provider.auth)
+      if not ok then return false, err end
+    end
+  end
   return true
 end
 
 local function validate_section(section, value)
-  if type(value) ~= "table" or vim.tbl_islist(value) then
-    return false, ("%s must be an object"):format(section)
-  end
-
+  if type(value) ~= "table" or vim.tbl_islist(value) then return false, ("%s must be an object"):format(section) end
   local allowed = {
-    python = {
-      package_manager = true,
-      formatter = true,
-      linter = true,
-      type_checker = true,
-    },
-    testing = {
-      runner = true,
-      profiles = true,
-    },
-    ai = {
-      enabled = true,
-      provider = true,
-      model = true,
-      instructions = true,
-    },
+    python = { package_manager = true, formatter = true, linter = true, type_checker = true },
+    testing = { runner = true, profiles = true },
+    ai = { enabled = true, provider = true, model = true, instructions = true, providers = true },
   }
-
   for key, item in pairs(value) do
-    if not allowed[section][key] then
-      return false, ("unknown key '%s.%s'"):format(section, key)
-    end
-
+    if not allowed[section][key] then return false, ("unknown key '%s.%s'"):format(section, key) end
     if section == "testing" and key == "profiles" then
       local ok, err = validate_profiles(item)
-      if not ok then
-        return false, err
-      end
+      if not ok then return false, err end
     elseif section == "ai" and key == "enabled" then
-      if type(item) ~= "boolean" then
-        return false, "ai.enabled must be a boolean"
-      end
+      if type(item) ~= "boolean" then return false, "ai.enabled must be a boolean" end
     elseif section == "ai" and key == "instructions" then
-      if type(item) ~= "table" or not vim.tbl_islist(item) then
-        return false, "ai.instructions must be an array"
-      end
+      if type(item) ~= "table" or not vim.tbl_islist(item) then return false, "ai.instructions must be an array" end
       for index, instruction in ipairs(item) do
         local ok, err = validate_string(instruction, ("ai.instructions[%d]"):format(index))
-        if not ok then
-          return false, err
-        end
+        if not ok then return false, err end
       end
+    elseif section == "ai" and key == "providers" then
+      local ok, err = validate_ai_providers(item)
+      if not ok then return false, err end
     else
-      local ok, err = validate_string(
-        item,
-        ("%s.%s"):format(section, key),
-        section == "python"
-      )
-      if not ok then
-        return false, err
-      end
+      local ok, err = validate_string(item, ("%s.%s"):format(section, key), section == "python")
+      if not ok then return false, err end
     end
   end
-
   return true
 end
 
 local function validate(data)
-  if type(data) ~= "table" or vim.tbl_islist(data) then
-    return false, "configuration root must be an object"
-  end
-
-  local allowed = {
-    python = true,
-    testing = true,
-    ai = true,
-  }
-
+  if type(data) ~= "table" or vim.tbl_islist(data) then return false, "configuration root must be an object" end
+  local allowed = { python = true, testing = true, ai = true }
   for section, value in pairs(data) do
-    if not allowed[section] then
-      return false, ("unknown top-level key '%s'"):format(section)
-    end
-
+    if not allowed[section] then return false, ("unknown top-level key '%s'"):format(section) end
     local ok, err = validate_section(section, value)
-    if not ok then
-      return false, err
-    end
+    if not ok then return false, err end
   end
-
   return true
 end
 
 local function read_yaml(path)
-  if vim.fn.filereadable(path) ~= 1 then
-    return nil
-  end
-
+  if vim.fn.filereadable(path) ~= 1 then return nil end
   local ok, yaml = pcall(require, "yaml")
-  if not ok then
-    notify_invalid(path, "YAML parser is unavailable")
-    return nil
-  end
-
+  if not ok then notify_invalid(path, "YAML parser is unavailable"); return nil end
   local data, err = yaml.read(path)
-  if not data then
-    notify_invalid(path, err or "failed to parse YAML")
-    return nil
-  end
-
+  if not data then notify_invalid(path, err or "failed to parse YAML"); return nil end
   local valid, validation_error = validate(data)
-  if not valid then
-    notify_invalid(path, validation_error)
-    return nil
-  end
-
+  if not valid then notify_invalid(path, validation_error); return nil end
   return data
 end
 
@@ -190,14 +177,9 @@ end
 
 function M.setup()
   M.options = vim.deepcopy(M.defaults)
-
   local root = project_root()
-  local project_config = root .. "/.sdet.yaml"
-  merge(M.options, read_yaml(project_config))
-
-  local local_config = vim.fn.stdpath("config") .. "/huginn.local.yaml"
-  merge(M.options, read_yaml(local_config))
-
+  merge(M.options, read_yaml(root .. "/.sdet.yaml"))
+  merge(M.options, read_yaml(vim.fn.stdpath("config") .. "/huginn.local.yaml"))
   M.options._project_root = root
 end
 
