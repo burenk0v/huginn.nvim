@@ -79,11 +79,16 @@ function M.logout(provider)
     return write_all(data)
   end
 
-  local ok = os.remove(storage_path())
+  local path = storage_path()
+  local ok, err = os.remove(path)
   if ok then
     return true
   end
-  return vim.fn.filereadable(storage_path()) ~= 1
+  if vim.fn.filereadable(path) ~= 1 then
+    return true
+  end
+  vim.notify("Huginn: failed to remove credential storage: " .. (err or "unknown error"), vim.log.levels.ERROR)
+  return false
 end
 
 local function random_hex(bytes)
