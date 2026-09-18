@@ -55,9 +55,18 @@ testing:
 
 ai:
   enabled: true
-  provider: openai
-  model: gpt-5
+  provider: corporate
+  model: company-model
   instructions: []
+  providers:
+    corporate:
+      type: openai_compatible
+      endpoint: https://ai.example.test/v1
+      model: company-model
+      auth:
+        type: oidc
+        issuer: https://login.example.test
+        client_id: huginn
 ```
 
 The schema is available at `config/schema.json` and is associated with `.sdet.yaml` through yaml-language-server.
@@ -86,9 +95,38 @@ The command-generation layer is isolated in `lua/huginn/testing.lua`, so command
 
 ## AI
 
-AI integration is provider-oriented. The first target is an OpenAI-compatible provider, while project instructions remain part of project configuration rather than being embedded in Lua.
+AI integration is provider-oriented. Huginn can connect to OpenAI-compatible endpoints and can authenticate desktop users through standard OIDC Authorization Code + PKCE.
 
-Secrets must come from the environment or an external secret manager. They must never be stored in `.sdet.yaml`.
+Example provider configuration:
+
+```yaml
+ai:
+  enabled: true
+  provider: corporate
+  providers:
+    corporate:
+      type: openai_compatible
+      endpoint: https://ai.example.test/v1
+      model: company-model
+      auth:
+        type: oidc
+        issuer: https://login.example.test
+        client_id: huginn
+```
+
+Run `:HuginnAIAuth` to open the corporate login page. Huginn starts a temporary localhost callback, receives the authorization code, exchanges it for tokens, and stores the credential outside the repository.
+
+Authentication commands:
+
+- `:HuginnAIAuth` — authenticate the configured provider in a browser
+- `:HuginnAIStatus` — show authentication status
+- `:HuginnAILogout` — remove the locally stored credential
+
+The credential is stored under Neovim's data directory with restrictive file permissions. Access and refresh tokens are never stored in `.sdet.yaml`.
+
+The OIDC client must be registered as a public desktop client and allow a localhost redirect URI. Huginn uses PKCE with the S256 challenge method.
+
+Huginn does not require a corporate CLI for this flow.
 
 ## Design principles
 
@@ -104,6 +142,7 @@ Secrets must come from the environment or an external secret manager. They must 
 ```text
 lua/huginn/
 ├── config.lua     # configuration loading and validation
+├── ai/            # AI provider authentication and integration
 ├── testing.lua    # test command generation
 ├── keymaps.lua    # editor actions
 ├── lazy.lua       # plugin declarations and integration setup
