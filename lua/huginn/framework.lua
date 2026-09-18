@@ -46,7 +46,7 @@ function M.neotest_debug_plugins()
     for _, plugin in ipairs(debug and debug.plugins or {}) do
       if type(plugin) == "string" and not seen[plugin] then
         table.insert(plugins, plugin)
-        seen[plugin] = true
+        seen[plugin] = plugin
       end
     end
   end
@@ -81,28 +81,5 @@ function M.supports_debug(name)
   local debug = adapter and adapter.neotest and adapter.neotest.debug
   return debug and debug.supported == true or false
 end
-
-M.register("pytest", {
-  filetypes = { "python" },
-
-  build_command = function(options, args)
-    local command = { options.runner or "pytest" }
-    for _, arg in ipairs(args or {}) do
-      table.insert(command, arg)
-    end
-    return command
-  end,
-
-  neotest = {
-    plugins = { "nvim-neotest/neotest-python" },
-    setup = function(options)
-      return require("neotest-python")({ runner = options.runner or "pytest" })
-    end,
-    debug = {
-      supported = true,
-      plugins = { "mfussenegger/nvim-dap" },
-    },
-  },
-})
 
 return M
