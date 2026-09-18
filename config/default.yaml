@@ -1,0 +1,24 @@
+# Huginn project configuration.
+# Copy to .sdet.yaml in a project and adapt only what differs.
+
+python:
+  package_manager: poetry
+  formatter: ruff
+  linter: ruff
+  type_checker: ty
+
+testing:
+  runner: pytest
+  profiles:
+    default:
+      - tests
+    unit:
+      - tests/unit
+    integration:
+      - tests/integration
+
+ai:
+  enabled: true
+  provider: openai
+  model: gpt-5
+  instructions: []
