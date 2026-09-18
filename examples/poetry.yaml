@@ -5,7 +5,10 @@ python:
   type_checker: ty
 
 testing:
-  runner: pytest
+  framework: pytest
+  frameworks:
+    pytest:
+      runner: pytest
   profiles:
     default:
       - tests
