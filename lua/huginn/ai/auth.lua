@@ -323,8 +323,17 @@ server.handle_request()
           end
         end
       end,
-      on_exit = function()
+      on_exit = function(result)
         server_finished = true
+        if result.code ~= 0 and result.signal ~= 15 then
+          vim.notify(
+            ("Huginn: OIDC callback server exited unexpectedly (code %d, signal %d)"):format(
+              result.code,
+              result.signal
+            ),
+            vim.log.levels.ERROR
+          )
+        end
       end,
     })
   end)
