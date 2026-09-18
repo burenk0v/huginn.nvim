@@ -1,4 +1,5 @@
 local config = require("huginn.config")
+local framework = require("huginn.framework")
 
 local M = {}
 
@@ -18,9 +19,20 @@ end
 
 function M.build_command(args)
   local cfg = config.get()
-  local command = command_prefix(cfg.python.package_manager)
+  local adapter = framework.get(cfg.testing.framework)
 
-  for _, arg in ipairs(args or {}) do
+  if not adapter then
+    vim.notify(
+      ("Huginn: unknown test framework '%s'"):format(cfg.testing.framework),
+      vim.log.levels.ERROR
+    )
+    return nil
+  end
+
+  local command = command_prefix(cfg.python.package_manager)
+  local framework_command = adapter.build_command(cfg, args)
+
+  for _, arg in ipairs(framework_command) do
     table.insert(command, arg)
   end
 
@@ -35,7 +47,7 @@ function M.build_profile_command(name)
     return nil
   end
 
-  return M.build_command(vim.list_extend({ cfg.testing.runner }, vim.deepcopy(profile)))
+  return M.build_command(profile)
 end
 
 function M.split_args(value)
