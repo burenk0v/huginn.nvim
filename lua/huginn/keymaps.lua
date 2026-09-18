@@ -5,6 +5,7 @@ local auth = require("huginn.ai.auth")
 local usage = require("huginn.ai.usage")
 
 local M = {}
+local setup_done = false
 
 local function run_terminal(command)
   if not command then
@@ -47,6 +48,10 @@ local function ai_provider()
 end
 
 function M.setup()
+  if setup_done then
+    return
+  end
+  setup_done = true
   vim.keymap.set("n", "<leader>tt", function() run_profile("default") end, { desc = "Run default test profile" })
 
   vim.keymap.set("n", "<leader>tf", function()
