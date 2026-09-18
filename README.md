@@ -44,6 +44,7 @@ python:
   type_checker: ty
 
 testing:
+  framework: pytest
   runner: pytest
   profiles:
     default:
@@ -79,12 +80,15 @@ Configuration files are validated before they are merged. Unknown keys and inval
 
 ## Testing
 
-Pytest execution is configurable and is built from two independent pieces:
+Pytest execution is configurable and is built from three independent pieces:
 
 - `python.package_manager` controls the environment prefix;
-- `testing.runner` and `testing.profiles` control the test command.
+- `testing.framework` selects the test framework adapter;
+- `testing.runner` and `testing.profiles` provide framework-specific command inputs.
 
 Supported package-manager shortcuts are `poetry`, `uv`, `pipenv`, and `none`. Any other non-empty value is treated as an executable prefix.
+
+The built-in `pytest` adapter preserves the existing command model. Framework adapters are registered in Lua and expose a small command-building interface, so a project-specific framework can be integrated without adding company-specific assumptions to Huginn's core.
 
 Keymaps:
 
@@ -95,7 +99,7 @@ Keymaps:
 - `<leader>tr` — run the nearest test through neotest
 - `<leader>td` — debug the nearest test
 
-The command-generation layer is isolated in `lua/huginn/testing.lua`, so command construction can be tested without opening a terminal.
+The command-generation layer is isolated in `lua/huginn/testing.lua`, while `lua/huginn/framework.lua` owns framework adapter registration and lookup.
 
 ## AI
 
@@ -153,6 +157,7 @@ Huginn does not require a corporate CLI for this flow.
 lua/huginn/
 ├── config.lua     # configuration loading and validation
 ├── ai/            # AI provider authentication and integration
+├── framework.lua  # test framework adapter registry
 ├── testing.lua    # test command generation
 ├── keymaps.lua    # editor actions
 ├── lazy.lua       # plugin declarations and integration setup
