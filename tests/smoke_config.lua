@@ -64,6 +64,9 @@ assert_equal(cfg.testing.runner, "pytest", "runner")
 local command = testing.build_profile_command("unit")
 assert_equal(table.concat(command, " "), "pytest tests/unit", "framework command")
 
+local file_command = testing.build_command({ "tests/test_example.py" })
+assert_equal(table.concat(file_command, " "), "pytest tests/test_example.py", "current file command")
+
 framework.register("custom", {
   build_command = function(_, args)
     return vim.list_extend({ "custom-runner" }, vim.deepcopy(args))
