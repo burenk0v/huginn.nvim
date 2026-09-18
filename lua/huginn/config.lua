@@ -19,6 +19,10 @@ M.defaults = {
     model = "gpt-5",
     instructions = {},
     providers = {},
+    usage = {
+      budget_tokens = 0,
+      cost_per_million_tokens = 0,
+    },
   },
 }
 
@@ -123,7 +127,7 @@ local function validate_section(section, value)
   local allowed = {
     python = { package_manager = true, formatter = true, linter = true, type_checker = true },
     testing = { runner = true, profiles = true },
-    ai = { enabled = true, provider = true, model = true, instructions = true, providers = true },
+    ai = { enabled = true, provider = true, model = true, instructions = true, providers = true, usage = true },
   }
   for key, item in pairs(value) do
     if not allowed[section][key] then return false, ("unknown key '%s.%s'"):format(section, key) end
@@ -141,6 +145,16 @@ local function validate_section(section, value)
     elseif section == "ai" and key == "providers" then
       local ok, err = validate_ai_providers(item)
       if not ok then return false, err end
+    elseif section == "ai" and key == "usage" then
+      if type(item) ~= "table" or vim.tbl_islist(item) then return false, "ai.usage must be an object" end
+      for usage_key, usage_value in pairs(item) do
+        if usage_key ~= "budget_tokens" and usage_key ~= "cost_per_million_tokens" then
+          return false, ("unknown key 'ai.usage.%s'"):format(usage_key)
+        end
+        if type(usage_value) ~= "number" or usage_value < 0 then
+          return false, ("ai.usage.%s must be a non-negative number"):format(usage_key)
+        end
+      end
     else
       local ok, err = validate_string(item, ("%s.%s"):format(section, key), section == "python")
       if not ok then return false, err end
