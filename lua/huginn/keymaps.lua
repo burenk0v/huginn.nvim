@@ -3,9 +3,12 @@ local testing = require("huginn.testing")
 
 local M = {}
 
-local function run_command(args)
-  local command = testing.build_command(args)
+local function run_terminal(command)
   vim.cmd("botright split | terminal " .. table.concat(vim.tbl_map(vim.fn.shellescape, command), " "))
+end
+
+local function run_command(args)
+  run_terminal(testing.build_command(args))
 end
 
 local function run_profile(name)
@@ -16,7 +19,7 @@ local function run_profile(name)
     return
   end
 
-  run_command(vim.list_extend({}, command))
+  run_terminal(command)
 end
 
 function M.setup()
