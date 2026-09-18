@@ -1,4 +1,5 @@
 local config = require("huginn.config")
+local framework = require("huginn.framework")
 local testing = require("huginn.testing")
 local auth = require("huginn.ai.auth")
 local usage = require("huginn.ai.usage")
@@ -6,6 +7,9 @@ local usage = require("huginn.ai.usage")
 local M = {}
 
 local function run_terminal(command)
+  if not command then
+    return
+  end
   vim.cmd("botright split | terminal " .. table.concat(vim.tbl_map(vim.fn.shellescape, command), " "))
 end
 
@@ -59,8 +63,18 @@ function M.setup()
     end
   end, { desc = "Run tests with arguments" })
 
-  vim.keymap.set("n", "<leader>tr", function() require("neotest").run.run() end, { desc = "Run nearest test" })
-  vim.keymap.set("n", "<leader>td", function() require("neotest").run.run({ strategy = "dap" }) end, { desc = "Debug nearest test" })
+  vim.keymap.set("n", "<leader>tr", function()
+    require("neotest").run.run()
+  end, { desc = "Run nearest test" })
+
+  vim.keymap.set("n", "<leader>td", function()
+    local name = config.get().testing.framework
+    if not framework.supports_debug(name) then
+      vim.notify(("Huginn: framework '%s' does not provide debug support"):format(name), vim.log.levels.WARN)
+      return
+    end
+    require("neotest").run.run({ strategy = "dap" })
+  end, { desc = "Debug nearest test" })
 
   if not config.get().ai.enabled then
     return
@@ -84,11 +98,11 @@ function M.setup()
       ("Huginn: AI provider '%s' is %s"):format(name, authenticated and "authenticated" or "not authenticated"),
       authenticated and vim.log.levels.INFO or vim.log.levels.WARN
     )
-  end, { desc = "Show Huginn AI authentication status" })
+  end, { desc = "Show authentication status" })
 
   vim.api.nvim_create_user_command("HuginnAIUsage", function()
     usage.status()
-  end, { desc = "Show Huginn AI token usage and cost" })
+  end, { desc = "Show AI token usage and cost" })
 
   vim.api.nvim_create_user_command("HuginnAILogout", function()
     local name = ai_provider()
@@ -96,7 +110,7 @@ function M.setup()
       auth.logout(name)
       vim.notify(("Huginn: logged out from AI provider '%s'"):format(name), vim.log.levels.INFO)
     end
-  end, { desc = "Remove Huginn AI credentials" })
+  end, { desc = "Remove locally stored AI credentials" })
 end
 
 return M
