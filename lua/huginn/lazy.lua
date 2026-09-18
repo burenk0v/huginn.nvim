@@ -1,4 +1,5 @@
 local config = require("huginn.config")
+local framework = require("huginn.framework")
 local usage = require("huginn.ai.usage")
 
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
@@ -16,6 +17,12 @@ if not vim.uv.fs_stat(lazypath) then
 end
 
 vim.opt.rtp:prepend(lazypath)
+
+local neotest_dependencies = {
+  "nvim-lua/plenary.nvim",
+  "nvim-treesitter/nvim-treesitter",
+}
+vim.list_extend(neotest_dependencies, framework.neotest_plugins())
 
 require("lazy").setup({
   {
@@ -86,18 +93,13 @@ require("lazy").setup({
   },
   {
     "nvim-neotest/neotest",
-    dependencies = {
-      "nvim-neotest/neotest-python",
-      "nvim-lua/plenary.nvim",
-      "nvim-treesitter/nvim-treesitter",
-    },
+    dependencies = neotest_dependencies,
     ft = "python",
     config = function()
       local cfg = config.get()
+      local adapter = framework.neotest_adapter(cfg.testing.framework, cfg)
       require("neotest").setup({
-        adapters = {
-          require("neotest-python")({ runner = cfg.testing.runner }),
-        },
+        adapters = adapter and { adapter } or {},
       })
     end,
   },
