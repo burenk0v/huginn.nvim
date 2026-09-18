@@ -95,10 +95,12 @@ assert_equal(testing.build_command({ "pytest", "tests" }), { "rye", "pytest", "t
 
 assert_equal(testing.build_profile_command("smoke"), { "rye", "pytest", "tests/smoke", "-q" }, "profile command")
 
-usage.record(2500)
+usage.record_chat(10, 2500)
+usage.record_chat(10, 3000)
+usage.record_chat(11, 1200)
 local usage_snapshot = usage.snapshot()
-assert_equal(usage_snapshot.tokens, 2500, "usage token count")
-assert_equal(usage_snapshot.requests, 1, "usage request count")
+assert_equal(usage_snapshot.tokens, 4200, "usage token count uses per-chat deltas")
+assert_equal(usage_snapshot.requests, 3, "usage request count")
 
 local notifications = {}
 local original_notify = vim.notify
