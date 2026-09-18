@@ -83,7 +83,10 @@
             "properties": {
               "type": {
                 "type": "string",
-                "minLength": 1
+                "minLength": 1,
+                "enum": [
+                  "openai_compatible"
+                ]
               },
               "endpoint": {
                 "type": "string",

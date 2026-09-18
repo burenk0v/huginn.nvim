@@ -33,9 +33,14 @@ local function ai_provider()
     return nil
   end
 
+  if cfg.ai.provider == "openai" then
+    vim.notify("Huginn: the built-in OpenAI provider does not use Huginn OIDC authentication", vim.log.levels.WARN)
+    return nil
+  end
+
   local provider = cfg.ai.providers[cfg.ai.provider]
   if not provider then
-    vim.notify(("Huginn: AI provider '%s' is not configured for authentication"):format(cfg.ai.provider), vim.log.levels.ERROR)
+    vim.notify(("Huginn: AI provider '%s' is not configured"):format(cfg.ai.provider), vim.log.levels.ERROR)
     return nil
   end
   return cfg.ai.provider, provider

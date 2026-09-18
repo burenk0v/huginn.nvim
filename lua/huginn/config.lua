@@ -106,6 +106,9 @@ local function validate_auth(provider_name, auth)
   end
   local ok, err = validate_string(auth.type, ("ai.providers.%s.auth.type"):format(provider_name))
   if not ok then return false, err end
+  if auth.type ~= "oidc" then
+    return false, ("ai.providers.%s.auth.type must be oidc"):format(provider_name)
+  end
   if auth.type == "oidc" then
     ok, err = validate_string(auth.issuer, ("ai.providers.%s.auth.issuer"):format(provider_name))
     if not ok then return false, err end
@@ -132,6 +135,9 @@ local function validate_ai_providers(value)
     end
     local ok, err = validate_string(provider.type, ("ai.providers.%s.type"):format(name))
     if not ok then return false, err end
+    if provider.type ~= "openai_compatible" then
+      return false, ("ai.providers.%s.type must be openai_compatible"):format(name)
+    end
     if provider.endpoint then
       ok, err = validate_string(provider.endpoint, ("ai.providers.%s.endpoint"):format(name))
       if not ok then return false, err end
@@ -192,6 +198,29 @@ local function validate_section(section, value)
   return true
 end
 
+local function validate_effective_ai(ai)
+  if not ai.enabled then
+    return true
+  end
+
+  if ai.provider == "openai" then
+    return true
+  end
+
+  local provider = ai.providers and ai.providers[ai.provider]
+  if not provider then
+    return false, ("ai.provider '%s' is not configured in ai.providers"):format(ai.provider)
+  end
+  if provider.type ~= "openai_compatible" then
+    return false, ("ai.providers.%s.type must be openai_compatible"):format(ai.provider)
+  end
+  if not provider.auth or provider.auth.type ~= "oidc" then
+    return false, ("ai.providers.%s.auth.type must be oidc"):format(ai.provider)
+  end
+
+  return true
+end
+
 local function validate(data)
   if type(data) ~= "table" or vim.tbl_islist(data) then return false, "configuration root must be an object" end
   local allowed = { python = true, testing = true, ai = true }
@@ -223,6 +252,13 @@ function M.setup()
   local root = project_root()
   merge(M.options, read_yaml(root .. "/.sdet.yaml"))
   merge(M.options, read_yaml(vim.fn.stdpath("config") .. "/huginn.local.yaml"))
+
+  local valid, validation_error = validate_effective_ai(M.options.ai)
+  if not valid then
+    notify_invalid("effective ai configuration", validation_error)
+    M.options.ai.enabled = false
+  end
+
   M.options._project_root = root
 end
 

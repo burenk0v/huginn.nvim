@@ -106,5 +106,33 @@ local usage_snapshot = usage.snapshot()
 assert_equal(usage_snapshot.tokens, 4200, "usage token count uses per-chat deltas")
 assert_equal(usage_snapshot.requests, 3, "usage request count")
 
+write(root .. "/project/.sdet.yaml", [[
+ai:
+  enabled: true
+  provider: missing-provider
+]])
+config.setup()
+assert_equal(config.get().ai.enabled, false, "missing selected AI provider disables AI")
+
+write(root .. "/project/.sdet.yaml", [[
+ai:
+  enabled: true
+  provider: corporate
+  providers:
+    corporate:
+      type: unsupported
+]])
+config.setup()
+assert_equal(config.get().ai.enabled, false, "unsupported AI provider type disables AI")
+
+write(root .. "/project/.sdet.yaml", [[
+ai:
+  enabled: true
+  provider: openai
+]])
+config.setup()
+assert_equal(config.get().ai.enabled, true, "built-in OpenAI provider remains valid")
+assert_equal(config.get().ai.provider, "openai", "built-in OpenAI provider is selected")
+
 print("Huginn config smoke test passed")
 vim.cmd("qa!")
