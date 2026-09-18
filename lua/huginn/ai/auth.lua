@@ -218,7 +218,17 @@ server.handle_request()
 
     local stdout = ""
     local port
-    vim.system({ "python", "-u", "-c", script, state }, {
+    local server_job
+    local server_finished = false
+    local function stop_server()
+      if server_job and not server_finished then
+        server_job:kill(15)
+      end
+    end
+
+    vim.defer_fn(stop_server, 5 * 60 * 1000)
+
+    server_job = vim.system({ "python", "-u", "-c", script, state }, {
       text = true,
       stdout = function(_, data)
         if not data then return end
@@ -251,6 +261,7 @@ server.handle_request()
               params[key] = vim.uri_decode(value)
             end
             if params.code or params.error then
+              stop_server()
               exchange_code(
                 name,
                 client_id,
@@ -262,6 +273,9 @@ server.handle_request()
             end
           end
         end
+      end,
+      on_exit = function()
+        server_finished = true
       end,
     })
   end)
