@@ -3,6 +3,7 @@ local M = {}
 local function storage_path()
   local dir = vim.fn.stdpath("data") .. "/huginn"
   vim.fn.mkdir(dir, "p")
+  pcall(vim.fn.setfperm, dir, "rwx------")
   return dir .. "/credentials.json"
 end
 
@@ -15,19 +16,38 @@ local function read_all()
   return ok and type(data) == "table" and data or {}
 end
 
+local write_sequence = 0
+
 local function write_all(data)
   local path = storage_path()
   local content = vim.json.encode(data)
-  local fd, err = vim.uv.fs_open(path, "w", 384)
+  write_sequence = write_sequence + 1
+  local temp_path = ("%s.tmp.%d.%d"):format(path, vim.fn.getpid(), write_sequence)
+
+  local fd, err = vim.uv.fs_open(temp_path, "w", 384)
   if not fd then
-    vim.notify("Huginn: failed to open credential storage: " .. err, vim.log.levels.ERROR)
+    vim.notify("Huginn: failed to open temporary credential storage: " .. err, vim.log.levels.ERROR)
     return false
   end
 
-  local written, write_err = vim.uv.fs_write(fd, content, -1)
+  local offset = 0
+  while offset < #content do
+    local written, write_err = vim.uv.fs_write(fd, content, offset)
+    if not written or written == 0 then
+      vim.uv.fs_close(fd)
+      pcall(os.remove, temp_path)
+      vim.notify("Huginn: failed to write credential storage: " .. (write_err or "no bytes written"), vim.log.levels.ERROR)
+      return false
+    end
+    offset = offset + written
+  end
+
   vim.uv.fs_close(fd)
-  if not written then
-    vim.notify("Huginn: failed to write credential storage: " .. write_err, vim.log.levels.ERROR)
+
+  local renamed, rename_err = vim.uv.fs_rename(temp_path, path)
+  if not renamed then
+    pcall(os.remove, temp_path)
+    vim.notify("Huginn: failed to replace credential storage: " .. rename_err, vim.log.levels.ERROR)
     return false
   end
 
