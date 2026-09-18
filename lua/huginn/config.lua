@@ -37,8 +37,11 @@ local function notify_invalid(path, message)
   vim.notify(("Huginn: invalid configuration in %s: %s"):format(path, message), vim.log.levels.ERROR)
 end
 
-local function validate_string(value, path)
-  if type(value) ~= "string" or value == "" then
+local function validate_string(value, path, allow_empty)
+  if type(value) ~= "string" then
+    return false, ("%s must be a string"):format(path)
+  end
+  if not allow_empty and value == "" then
     return false, ("%s must be a non-empty string"):format(path)
   end
   return true
@@ -116,7 +119,11 @@ local function validate_section(section, value)
         end
       end
     else
-      local ok, err = validate_string(item, ("%s.%s"):format(section, key))
+      local ok, err = validate_string(
+        item,
+        ("%s.%s"):format(section, key),
+        section == "python"
+      )
       if not ok then
         return false, err
       end
