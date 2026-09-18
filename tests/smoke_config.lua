@@ -1,4 +1,5 @@
 local config = require("huginn.config")
+local framework = require("huginn.framework")
 local testing = require("huginn.testing")
 local usage = require("huginn.ai.usage")
 
@@ -62,6 +63,15 @@ assert_equal(cfg.testing.runner, "pytest", "runner")
 
 local command = testing.build_profile_command("unit")
 assert_equal(table.concat(command, " "), "pytest tests/unit", "framework command")
+
+framework.register("custom", {
+  build_command = function(_, args)
+    return vim.list_extend({ "custom-runner" }, vim.deepcopy(args))
+  end,
+})
+cfg.testing.framework = "custom"
+local custom_command = testing.build_profile_command("unit")
+assert_equal(table.concat(custom_command, " "), "custom-runner tests/unit", "custom framework adapter")
 
 local names = vim.fn.getcompletion("", "file")
 assert_true(type(names) == "table", "headless runtime")
