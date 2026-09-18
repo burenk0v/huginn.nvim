@@ -8,22 +8,36 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "package_manager": { "type": "string", "minLength": 1 },
-        "formatter": { "type": "string" },
-        "linter": { "type": "string" },
-        "type_checker": { "type": "string" }
+        "package_manager": {
+          "type": "string",
+          "minLength": 1
+        },
+        "formatter": {
+          "type": "string"
+        },
+        "linter": {
+          "type": "string"
+        },
+        "type_checker": {
+          "type": "string"
+        }
       }
     },
     "testing": {
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "runner": { "type": "string", "minLength": 1 },
+        "runner": {
+          "type": "string",
+          "minLength": 1
+        },
         "profiles": {
           "type": "object",
           "additionalProperties": {
             "type": "array",
-            "items": { "type": "string" }
+            "items": {
+              "type": "string"
+            }
           }
         }
       }
@@ -32,12 +46,22 @@
       "type": "object",
       "additionalProperties": false,
       "properties": {
-        "enabled": { "type": "boolean" },
-        "provider": { "type": "string", "minLength": 1 },
-        "model": { "type": "string", "minLength": 1 },
+        "enabled": {
+          "type": "boolean"
+        },
+        "provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
         "instructions": {
           "type": "array",
-          "items": { "type": "string" }
+          "items": {
+            "type": "string"
+          }
         },
         "providers": {
           "type": "object",
@@ -45,19 +69,56 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "type": { "type": "string", "minLength": 1 },
-              "endpoint": { "type": "string", "minLength": 1 },
-              "model": { "type": "string", "minLength": 1 },
+              "type": {
+                "type": "string",
+                "minLength": 1
+              },
+              "endpoint": {
+                "type": "string",
+                "minLength": 1
+              },
+              "model": {
+                "type": "string",
+                "minLength": 1
+              },
               "auth": {
                 "type": "object",
                 "additionalProperties": false,
                 "properties": {
-                  "type": { "type": "string", "enum": ["oidc"] },
-                  "issuer": { "type": "string", "minLength": 1 },
-                  "client_id": { "type": "string", "minLength": 1 },
-                  "scope": { "type": "string", "minLength": 1 }
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "oidc"
+                    ]
+                  },
+                  "issuer": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "client_id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "scope": {
+                    "type": "string",
+                    "minLength": 1
+                  }
                 }
               }
+            }
+          }
+        },
+        "usage": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "budget_tokens": {
+              "type": "number",
+              "minimum": 0
+            },
+            "cost_per_million_tokens": {
+              "type": "number",
+              "minimum": 0
             }
           }
         }

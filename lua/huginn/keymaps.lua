@@ -1,6 +1,7 @@
 local config = require("huginn.config")
 local testing = require("huginn.testing")
 local auth = require("huginn.ai.auth")
+local usage = require("huginn.ai.usage")
 
 local M = {}
 
@@ -75,6 +76,10 @@ function M.setup()
       authenticated and vim.log.levels.INFO or vim.log.levels.WARN
     )
   end, { desc = "Show Huginn AI authentication status" })
+
+  vim.api.nvim_create_user_command("HuginnAIUsage", function()
+    usage.status()
+  end, { desc = "Show Huginn AI token usage and cost" })
 
   vim.api.nvim_create_user_command("HuginnAILogout", function()
     local name = ai_provider()

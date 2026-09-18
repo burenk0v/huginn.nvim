@@ -1,4 +1,5 @@
 local config = require("huginn.config")
+local usage = require("huginn.ai.usage")
 
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 
@@ -148,3 +149,5 @@ require("lazy").setup({
 }, {
   checker = { enabled = true },
 })
+
+usage.setup()

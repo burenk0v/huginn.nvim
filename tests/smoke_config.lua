@@ -24,6 +24,7 @@ vim.cmd("cd " .. vim.fn.fnameescape(root))
 
 local config = require("huginn.config")
 local testing = require("huginn.testing")
+local usage = require("huginn.ai.usage")
 
 write(root .. "/.sdet.yaml", [[
 python:
@@ -73,6 +74,8 @@ assert_equal(cfg.ai.model, "project-model", "project AI model")
 assert_equal(cfg.ai.providers.corporate.type, "openai_compatible", "AI provider type")
 assert_equal(cfg.ai.providers.corporate.auth.type, "oidc", "AI auth type")
 assert_equal(cfg.ai.providers.corporate.auth.client_id, "huginn", "OIDC client id")
+assert_equal(cfg.ai.usage.budget_tokens, 0, "default usage budget")
+assert_equal(cfg.ai.usage.cost_per_million_tokens, 0, "default token cost")
 assert_equal(cfg.ai.instructions, { "Use the project framework documentation." }, "local AI instructions")
 
 cfg.python.package_manager = "poetry"
@@ -91,6 +94,11 @@ cfg.python.package_manager = "rye"
 assert_equal(testing.build_command({ "pytest", "tests" }), { "rye", "pytest", "tests" }, "custom executable prefix")
 
 assert_equal(testing.build_profile_command("smoke"), { "rye", "pytest", "tests/smoke", "-q" }, "profile command")
+
+usage.record(2500)
+local usage_snapshot = usage.snapshot()
+assert_equal(usage_snapshot.tokens, 2500, "usage token count")
+assert_equal(usage_snapshot.requests, 1, "usage request count")
 
 local notifications = {}
 local original_notify = vim.notify
