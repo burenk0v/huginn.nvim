@@ -1,0 +1,13 @@
+python:
+  package_manager: poetry
+  formatter: ruff
+  linter: ruff
+  type_checker: ty
+
+testing:
+  runner: pytest
+  profiles:
+    default:
+      - tests
+    smoke:
+      - tests/smoke
