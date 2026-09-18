@@ -40,7 +40,7 @@ local function run_profile(name)
     return
   end
 
-  run_command(vim.tbl_extend("force", { cfg.testing.runner }, profile))
+  run_command(vim.list_extend({ cfg.testing.runner }, vim.deepcopy(profile)))
 end
 
 function M.setup()
@@ -65,7 +65,7 @@ function M.setup()
   vim.keymap.set("n", "<leader>ta", function()
     local args = vim.fn.input("test args: ")
     if args ~= "" then
-      run_command(vim.tbl_extend("force", { config.get().testing.runner }, split_args(args)))
+      run_command(vim.list_extend({ config.get().testing.runner }, split_args(args)))
     end
   end, { desc = "Run tests with arguments" })
 
