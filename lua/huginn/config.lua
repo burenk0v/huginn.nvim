@@ -44,18 +44,23 @@ local function validate_string(value, path)
   return true
 end
 
-local function validate_string_map(value, path)
+local function validate_profiles(value)
   if type(value) ~= "table" or vim.tbl_islist(value) then
-    return false, ("%s must be an object"):format(path)
+    return false, "testing.profiles must be an object"
   end
 
-  for key, item in pairs(value) do
-    if type(key) ~= "string" then
-      return false, ("%s keys must be strings"):format(path)
+  for name, profile in pairs(value) do
+    if type(name) ~= "string" or name == "" then
+      return false, "testing.profiles keys must be non-empty strings"
     end
-    local ok, err = validate_string(item, ("%s.%s"):format(path, key))
-    if not ok then
-      return false, err
+    if type(profile) ~= "table" or not vim.tbl_islist(profile) then
+      return false, ("testing.profiles.%s must be an array"):format(name)
+    end
+    for index, arg in ipairs(profile) do
+      local ok, err = validate_string(arg, ("testing.profiles.%s[%d]"):format(name, index))
+      if not ok then
+        return false, err
+      end
     end
   end
 
@@ -92,7 +97,7 @@ local function validate_section(section, value)
     end
 
     if section == "testing" and key == "profiles" then
-      local ok, err = validate_string_map(item, "testing.profiles")
+      local ok, err = validate_profiles(item)
       if not ok then
         return false, err
       end
