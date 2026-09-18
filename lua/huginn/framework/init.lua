@@ -82,4 +82,6 @@ function M.supports_debug(name)
   return debug and debug.supported == true or false
 end
 
+require("huginn.framework.pytest").setup(M)
+
 return M
