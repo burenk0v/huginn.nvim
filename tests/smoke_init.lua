@@ -56,7 +56,8 @@ end
 
 local neotest = find_plugin("nvim-neotest/neotest")
 assert_true(neotest ~= nil, "Neotest plugin spec is present")
-assert_true(neotest.enabled == true or type(neotest.enabled) == "function", "Neotest plugin is enabled for pytest")
+assert_true(type(neotest.enabled) == "function", "Neotest uses a runtime capability predicate")
+assert_equal(neotest.enabled(), true, "Neotest is enabled for pytest")
 assert_equal(vim.inspect(neotest.ft), '{ "python" }', "Neotest filetypes come from framework")
 assert_true(vim.tbl_contains(neotest.dependencies, "nvim-neotest/neotest-python"), "Neotest framework adapter dependency is declared")
 assert_true(vim.tbl_contains(neotest.dependencies, "mfussenegger/nvim-dap"), "Neotest debug dependency is declared")
