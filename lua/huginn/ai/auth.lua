@@ -80,7 +80,10 @@ function M.logout(provider)
   end
 
   local ok = os.remove(storage_path())
-  return ok or not vim.fn.filereadable(storage_path()) == 1
+  if ok then
+    return true
+  end
+  return vim.fn.filereadable(storage_path()) ~= 1
 end
 
 local function random_hex(bytes)
