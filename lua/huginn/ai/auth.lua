@@ -24,7 +24,16 @@ local function write_all(data)
 end
 
 function M.get(provider)
-  return read_all()[provider]
+  local credentials = read_all()[provider]
+  if not credentials then
+    return nil
+  end
+
+  if credentials.expires_at and tonumber(credentials.expires_at) and tonumber(credentials.expires_at) <= os.time() then
+    return nil
+  end
+
+  return credentials
 end
 
 function M.status(provider)
@@ -109,11 +118,13 @@ local function exchange_code(provider_name, client_id, redirect_uri, verifier, t
     end
 
     local data = read_all()
+    local expires_in = tonumber(tokens.expires_in)
     data[provider_name] = {
       access_token = tokens.access_token,
       refresh_token = tokens.refresh_token,
       token_type = tokens.token_type or "Bearer",
-      expires_in = tokens.expires_in,
+      expires_in = expires_in,
+      expires_at = expires_in and expires_in > 0 and (os.time() + expires_in) or nil,
     }
     write_all(data)
     vim.notify("Huginn: AI authentication successful", vim.log.levels.INFO)
@@ -167,7 +178,12 @@ expected = sys.argv[1]
 
 class Handler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
-        query = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+        parsed = urllib.parse.urlparse(self.path)
+        if parsed.path != "/callback":
+            self.send_error(404)
+            return
+
+        query = urllib.parse.parse_qs(parsed.query)
         if query.get("state", [""])[0] != expected:
             self.send_error(400)
             return
@@ -176,6 +192,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
         self.send_header("Content-Type", "text/html; charset=utf-8")
         self.end_headers()
         self.wfile.write(b"<html><body>Authentication complete. Return to Neovim.</body></html>")
+
+    def do_POST(self):
+        self.send_error(405)
 
     def log_message(self, *_):
         pass
