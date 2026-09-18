@@ -116,7 +116,22 @@ local function run_curl(args, callback)
 end
 
 local function open_browser(url)
-  vim.ui.open(url)
+  local _, err = vim.ui.open(url)
+  if err then
+    vim.notify("Huginn: failed to open browser: " .. err, vim.log.levels.ERROR)
+    return false
+  end
+  return true
+end
+
+local function python_executable()
+  for _, executable in ipairs({ "python", "python3" }) do
+    local path = vim.fn.exepath(executable)
+    if path ~= "" then
+      return path
+    end
+  end
+  return nil
 end
 
 local function exchange_code(provider_name, client_id, redirect_uri, verifier, token_endpoint, params)
@@ -248,7 +263,7 @@ server.handle_request()
 
     vim.defer_fn(stop_server, 5 * 60 * 1000)
 
-    server_job = vim.system({ "python", "-u", "-c", script, state }, {
+    server_job = vim.system({ python, "-u", "-c", script, state }, {
       text = true,
       stdout = function(_, data)
         if not data then return end
