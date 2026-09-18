@@ -17,7 +17,8 @@ end
 function M.snapshot()
   local cfg = config.get()
   local usage = cfg.ai.usage or {}
-  local budget = tonumber(usage.budget_tokens)
+  local configured_budget = tonumber(usage.budget_tokens)
+  local budget = configured_budget and configured_budget > 0 and configured_budget or nil
   local cost_per_million = tonumber(usage.cost_per_million_tokens) or 0
   local cost = M.total_tokens / 1000000 * cost_per_million
 
