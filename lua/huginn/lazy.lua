@@ -18,6 +18,7 @@ end
 
 vim.opt.rtp:prepend(lazypath)
 
+local cfg = config.get()
 local neotest_dependencies = {
   "nvim-lua/plenary.nvim",
   "nvim-treesitter/nvim-treesitter",
@@ -91,11 +92,15 @@ require("lazy").setup({
   },
   {
     "nvim-neotest/neotest",
+    enabled = function()
+      return framework.has_neotest(config.get().testing.framework)
+    end,
     dependencies = neotest_dependencies,
-    ft = "python",
+    ft = framework.filetypes(cfg.testing.framework),
     config = function()
       local cfg = config.get()
-      local adapter = framework.neotest_adapter(cfg.testing.framework, cfg)
+      local options = cfg.testing.frameworks[cfg.testing.framework] or {}
+      local adapter = framework.neotest_adapter(cfg.testing.framework, options)
       require("neotest").setup({
         adapters = adapter and { adapter } or {},
       })

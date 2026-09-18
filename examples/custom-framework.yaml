@@ -1,5 +1,6 @@
-# Example for a team with a custom pytest-based framework.
+# Example for a team with a custom test framework.
 # Huginn intentionally does not hard-code framework-specific conventions.
+# The adapter named "my-framework" can consume the runner option below.
 
 python:
   package_manager: poetry
@@ -8,7 +9,10 @@ python:
   type_checker: ty
 
 testing:
-  runner: pytest
+  framework: my-framework
+  frameworks:
+    my-framework:
+      runner: my-test-command
   profiles:
     default:
       - tests
