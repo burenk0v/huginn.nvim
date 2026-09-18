@@ -134,5 +134,12 @@ config.setup()
 assert_equal(config.get().ai.enabled, true, "built-in OpenAI provider remains valid")
 assert_equal(config.get().ai.provider, "openai", "built-in OpenAI provider is selected")
 
+local defaults = vim.deepcopy(config.defaults)
+assert_equal(defaults.python.package_manager, "poetry", "default YAML contract package manager")
+assert_equal(defaults.testing.frameworks.pytest.runner, "pytest", "default YAML contract framework runner")
+assert_equal(#defaults.testing.profiles.default, 1, "default YAML contract profile")
+assert_equal(defaults.ai.usage.budget_tokens, 0, "default AI budget")
+assert_equal(defaults.ai.usage.cost_per_million_tokens, 0, "default AI price")
+
 print("Huginn config smoke test passed")
 vim.cmd("qa!")
