@@ -44,7 +44,7 @@ require("lazy").setup({
       require("mason").setup()
       require("mason-lspconfig").setup()
 
-      local schema = vim.fn.stdpath("config") .. "/config/schema.json"
+      local schema = vim.api.nvim_get_runtime_file("config/schema.json", false)[1]
       if vim.fn.filereadable(schema) == 1 and vim.fn.has("nvim-0.11") == 1 then
         vim.lsp.config("yamlls", {
           settings = {

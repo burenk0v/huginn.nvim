@@ -52,6 +52,30 @@ local function find_plugin(name)
   end
 end
 
+local lspconfig = find_plugin("neovim/nvim-lspconfig")
+assert_true(lspconfig ~= nil, "LSP plugin spec is present")
+
+package.loaded["mason"] = { setup = function() end }
+package.loaded["mason-lspconfig"] = { setup = function() end }
+
+local captured_lsp_config
+vim.lsp.config = function(name, options)
+  if name == "yamlls" then
+    captured_lsp_config = options
+  end
+end
+vim.lsp.enable = function() end
+
+lspconfig.config()
+
+local schema = vim.api.nvim_get_runtime_file("config/schema.json", false)[1]
+assert_true(schema ~= nil, "Huginn YAML schema is available on the runtime path")
+assert_equal(
+  captured_lsp_config.settings.yaml.schemas[schema],
+  ".sdet.yaml",
+  "YAML schema is resolved from the Huginn runtime path"
+)
+
 local neotest = find_plugin("nvim-neotest/neotest")
 assert_true(neotest ~= nil, "Neotest plugin spec is present")
 assert_true(type(neotest.enabled) == "function", "Neotest uses a runtime capability predicate")
