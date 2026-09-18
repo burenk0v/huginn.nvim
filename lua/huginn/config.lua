@@ -8,6 +8,7 @@ M.defaults = {
     type_checker = "ty",
   },
   testing = {
+    framework = "pytest",
     runner = "pytest",
     profiles = {
       default = { "tests" },
@@ -126,7 +127,7 @@ local function validate_section(section, value)
   if type(value) ~= "table" or vim.tbl_islist(value) then return false, ("%s must be an object"):format(section) end
   local allowed = {
     python = { package_manager = true, formatter = true, linter = true, type_checker = true },
-    testing = { runner = true, profiles = true },
+    testing = { framework = true, runner = true, profiles = true },
     ai = { enabled = true, provider = true, model = true, instructions = true, providers = true, usage = true },
   }
   for key, item in pairs(value) do
