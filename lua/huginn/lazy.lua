@@ -1,3 +1,5 @@
+local config = require("huginn.config")
+
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
 
 if not vim.uv.fs_stat(lazypath) then
@@ -28,27 +30,23 @@ require("lazy").setup({
     },
     ft = { "python", "yaml" },
     config = function()
-      local config = require("huginn.config").get()
-
+      local cfg = config.get()
       require("mason").setup()
       require("mason-lspconfig").setup()
 
       local schema = vim.fn.stdpath("config") .. "/config/schema.json"
-
       if vim.fn.filereadable(schema) == 1 and vim.fn.has("nvim-0.11") == 1 then
         vim.lsp.config("yamlls", {
           settings = {
             yaml = {
-              schemas = {
-                [schema] = ".sdet.yaml",
-              },
+              schemas = { [schema] = ".sdet.yaml" },
             },
           },
         })
         vim.lsp.enable("yamlls")
       end
 
-      if config.python.type_checker == "ty" and vim.fn.executable("ty") == 1 and vim.fn.has("nvim-0.11") == 1 then
+      if cfg.python.type_checker == "ty" and vim.fn.executable("ty") == 1 and vim.fn.has("nvim-0.11") == 1 then
         vim.lsp.config("ty", {
           cmd = { "ty", "server" },
           filetypes = { "python" },
@@ -62,8 +60,8 @@ require("lazy").setup({
     "stevearc/conform.nvim",
     ft = "python",
     config = function()
-      local config = require("huginn.config").get()
-      local formatter = config.python.formatter
+      local cfg = config.get()
+      local formatter = cfg.python.formatter
       require("conform").setup({
         formatters_by_ft = {
           python = formatter ~= "" and { formatter == "ruff" and "ruff_format" or formatter } or {},
@@ -75,10 +73,9 @@ require("lazy").setup({
     "mfussenegger/nvim-lint",
     ft = "python",
     config = function()
-      local config = require("huginn.config").get()
-      local linter = config.python.linter
-      local lint = require("lint")
-      lint.linters_by_ft = {
+      local cfg = config.get()
+      local linter = cfg.python.linter
+      require("lint").linters_by_ft = {
         python = linter ~= "" and { linter } or {},
       }
     end,
@@ -95,12 +92,10 @@ require("lazy").setup({
     },
     ft = "python",
     config = function()
-      local config = require("huginn.config").get()
+      local cfg = config.get()
       require("neotest").setup({
         adapters = {
-          require("neotest-python")({
-            runner = config.testing.runner,
-          }),
+          require("neotest-python")({ runner = cfg.testing.runner }),
         },
       })
     end,
@@ -111,23 +106,42 @@ require("lazy").setup({
       "nvim-lua/plenary.nvim",
     },
     opts = function()
-      local config = require("huginn.config").get()
+      local cfg = config.get()
+      local adapters = {}
+      local auth = require("huginn.ai.auth")
+
+      for name, provider in pairs(cfg.ai.providers or {}) do
+        if provider.type == "openai_compatible" then
+          adapters.http = adapters.http or {}
+          adapters.http[name] = function()
+            return require("codecompanion.adapters").extend("openai_compatible", {
+              env = {
+                url = provider.endpoint,
+                api_key = function()
+                  local credentials = auth.get(name)
+                  return credentials and credentials.access_token or ""
+                end,
+              },
+              schema = {
+                model = {
+                  default = provider.model or cfg.ai.model,
+                },
+              },
+            })
+          end
+        end
+      end
+
       return {
-        strategies = {
+        interactions = {
           chat = {
-            adapter = config.ai.provider,
+            adapter = cfg.ai.provider,
           },
           inline = {
-            adapter = config.ai.provider,
+            adapter = cfg.ai.provider,
           },
         },
-        adapters = {
-          http = {
-            [config.ai.provider] = {
-              model = config.ai.model,
-            },
-          },
-        },
+        adapters = adapters,
       }
     end,
   },
