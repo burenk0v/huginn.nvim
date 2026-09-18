@@ -20,7 +20,7 @@ end
 local function run_profile(name)
   local command = testing.build_profile_command(name)
   if not command then
-    vim.notify(("Huginn: unknown pytest profile '%s'"):format(name), vim.log.levels.ERROR)
+    vim.notify(("Huginn: unknown test profile '%s'"):format(name), vim.log.levels.ERROR)
     return
   end
   run_terminal(command)
@@ -64,6 +64,11 @@ function M.setup()
   end, { desc = "Run tests with arguments" })
 
   vim.keymap.set("n", "<leader>tr", function()
+    local name = config.get().testing.framework
+    if not framework.has_neotest(name) then
+      vim.notify(("Huginn: framework '%s' does not provide Neotest support"):format(name), vim.log.levels.WARN)
+      return
+    end
     require("neotest").run.run()
   end, { desc = "Run nearest test" })
 
@@ -110,7 +115,7 @@ function M.setup()
       auth.logout(name)
       vim.notify(("Huginn: logged out from AI provider '%s'"):format(name), vim.log.levels.INFO)
     end
-  end, { desc = "Remove locally stored AI credentials" })
+  end, { desc = "Remove locally stored Huginn AI credentials" })
 end
 
 return M
