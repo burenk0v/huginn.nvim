@@ -8,32 +8,64 @@ local function assert_equal(actual, expected, message)
   end
 end
 
+local function assert_true(value, message)
+  assert(value == true, message)
+end
+
 local root = vim.fn.tempname()
 vim.fn.mkdir(root, "p")
 vim.cmd("cd " .. vim.fn.fnameescape(root))
 
-local config = require("huginn.config")
-local keymaps_called = false
+vim.fn.writefile(vim.split([[
+testing:
+  framework: pytest
+  frameworks:
+    pytest:
+      runner: pytest
+ai:
+  enabled: false
+]], "\n", { plain = true }), root .. "/.sdet.yaml")
 
-package.loaded["huginn.lazy"] = {}
-package.loaded["huginn.keymaps"] = {
-  setup = function()
-    keymaps_called = true
+-- Keep the smoke test offline: emulate lazy.nvim's setup boundary while
+-- executing Huginn's complete plugin-spec construction.
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+vim.fn.mkdir(lazypath, "p")
+
+local captured_specs
+package.loaded["lazy"] = {
+  setup = function(specs)
+    captured_specs = specs
   end,
 }
 
-vim.fn.writefile(vim.split([[
-ai:
-  enabled: false
-  provider: disabled
-]], "\n", { plain = true }), root .. "/.sdet.yaml")
+package.loaded["huginn.keymaps"] = {
+  setup = function() end,
+}
 
 require("huginn").setup()
 
-local cfg = config.get()
-assert_equal(cfg.ai.enabled, false, "configuration is loaded before integrations")
-assert_equal(cfg.ai.provider, "disabled", "project AI settings are applied before integrations")
-assert_equal(keymaps_called, true, "keymaps setup is invoked after configuration")
+assert_true(type(captured_specs) == "table", "Huginn initializes the lazy.nvim plugin specification")
 
-print("Huginn initialization-order smoke test: OK")
+local function find_plugin(name)
+  for _, spec in ipairs(captured_specs) do
+    if spec[1] == name then
+      return spec
+    end
+  end
+end
+
+local neotest = find_plugin("nvim-neotest/neotest")
+assert_true(neotest ~= nil, "Neotest plugin spec is present")
+assert_true(type(neotest.enabled) == "function", "Neotest uses a runtime capability predicate")
+assert_equal(neotest.enabled(), true, "Neotest is enabled for pytest")
+assert_equal(vim.inspect(neotest.ft), '{ "python" }', "Neotest filetypes come from framework")
+assert_true(vim.tbl_contains(neotest.dependencies, "nvim-neotest/neotest-python"), "Neotest framework adapter dependency is declared")
+assert_true(vim.tbl_contains(neotest.dependencies, "mfussenegger/nvim-dap"), "Neotest debug dependency is declared")
+
+local codecompanion = find_plugin("olimorris/codecompanion.nvim")
+assert_true(codecompanion ~= nil, "CodeCompanion plugin spec is present")
+assert_true(type(codecompanion.enabled) == "function", "CodeCompanion uses a runtime enable predicate")
+assert_equal(codecompanion.enabled(), false, "CodeCompanion is disabled by project configuration")
+
+print("Huginn plugin initialization smoke test: OK")
 vim.cmd("qa!")
