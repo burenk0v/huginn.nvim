@@ -76,10 +76,11 @@ function M.logout(provider)
   local data = read_all()
   data[provider] = nil
   if next(data) then
-    write_all(data)
-  else
-    pcall(os.remove, storage_path())
+    return write_all(data)
   end
+
+  local ok = os.remove(storage_path())
+  return ok or not vim.fn.filereadable(storage_path()) == 1
 end
 
 local function random_hex(bytes)
