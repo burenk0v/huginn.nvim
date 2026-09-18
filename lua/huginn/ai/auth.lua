@@ -173,7 +173,9 @@ local function exchange_code(provider_name, client_id, redirect_uri, verifier, t
       expires_in = expires_in,
       expires_at = expires_in and expires_in > 0 and (os.time() + expires_in) or nil,
     }
-    write_all(data)
+    if not write_all(data) then
+      return
+    end
     vim.notify("Huginn: AI authentication successful", vim.log.levels.INFO)
   end)
 end
