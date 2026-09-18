@@ -88,7 +88,7 @@ Pytest execution is configurable and is built from three independent pieces:
 
 Supported package-manager shortcuts are `poetry`, `uv`, `pipenv`, and `none`. Any other non-empty value is treated as an executable prefix.
 
-The built-in `pytest` adapter preserves the existing command model. Framework adapters are registered in Lua and expose a small command-building interface, so a project-specific framework can be integrated without adding company-specific assumptions to Huginn's core.
+The built-in `pytest` adapter preserves the existing command model. Framework adapters are registered in Lua and expose a small command-building interface, so a project-specific framework can be integrated without adding company-specific assumptions to Huginn's core. An adapter may also declare its Neotest plugin and adapter factory; frameworks without Neotest support remain usable through the command layer without a Python-specific fallback.
 
 Keymaps:
 
@@ -99,7 +99,7 @@ Keymaps:
 - `<leader>tr` — run the nearest test through neotest
 - `<leader>td` — debug the nearest test
 
-The command-generation layer is isolated in `lua/huginn/testing.lua`, while `lua/huginn/framework.lua` owns framework adapter registration and lookup.
+The command-generation layer is isolated in `lua/huginn/testing.lua`, while `lua/huginn/framework.lua` owns framework adapter registration, command integration, and optional Neotest integration. Huginn's Neotest setup no longer selects `neotest-python` directly.
 
 ## AI
 
