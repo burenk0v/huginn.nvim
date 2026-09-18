@@ -13,15 +13,40 @@ function M.get(name)
   return adapters[name]
 end
 
-function M.neotest_plugins()
+local function collect_neotest_plugins(field)
   local plugins = {}
   local seen = {}
 
   for _, adapter in pairs(adapters) do
     local neotest = adapter.neotest
-    if neotest and type(neotest.plugin) == "string" and not seen[neotest.plugin] then
-      table.insert(plugins, neotest.plugin)
-      seen[neotest.plugin] = true
+    local entries = neotest and neotest[field]
+    for _, plugin in ipairs(entries or {}) do
+      if type(plugin) == "string" and not seen[plugin] then
+        table.insert(plugins, plugin)
+        seen[plugin] = true
+      end
+    end
+  end
+
+  table.sort(plugins)
+  return plugins
+end
+
+function M.neotest_plugins()
+  return collect_neotest_plugins("plugins")
+end
+
+function M.neotest_debug_plugins()
+  local plugins = {}
+  local seen = {}
+
+  for _, adapter in pairs(adapters) do
+    local debug = adapter.neotest and adapter.neotest.debug
+    for _, plugin in ipairs(debug and debug.plugins or {}) do
+      if type(plugin) == "string" and not seen[plugin] then
+        table.insert(plugins, plugin)
+        seen[plugin] = true
+      end
     end
   end
 
@@ -39,6 +64,12 @@ function M.neotest_adapter(name, cfg)
   return neotest.setup(cfg)
 end
 
+function M.supports_debug(name)
+  local adapter = M.get(name)
+  local debug = adapter and adapter.neotest and adapter.neotest.debug
+  return debug and debug.supported == true or false
+end
+
 M.register("pytest", {
   build_command = function(cfg, args)
     local command = { cfg.testing.runner }
@@ -49,10 +80,14 @@ M.register("pytest", {
   end,
 
   neotest = {
-    plugin = "nvim-neotest/neotest-python",
+    plugins = { "nvim-neotest/neotest-python" },
     setup = function(cfg)
       return require("neotest-python")({ runner = cfg.testing.runner })
     end,
+    debug = {
+      supported = true,
+      plugins = { "mfussenegger/nvim-dap" },
+    },
   },
 })
 
