@@ -26,7 +26,9 @@ python:
   formatter: ruff
 testing:
   framework: pytest
-  runner: pytest
+  frameworks:
+    pytest:
+      runner: pytest
   profiles:
     default:
       - tests
@@ -59,7 +61,7 @@ local cfg = config.get()
 assert_equal(cfg.testing.framework, "pytest", "framework")
 assert_equal(cfg.python.package_manager, "none", "package manager")
 assert_equal(cfg.python.formatter, "ruff", "formatter")
-assert_equal(cfg.testing.runner, "pytest", "runner")
+assert_equal(cfg.testing.frameworks.pytest.runner, "pytest", "framework runner")
 
 local command = testing.build_profile_command("unit")
 assert_equal(table.concat(command, " "), "pytest tests/unit", "framework command")
@@ -72,19 +74,27 @@ assert_equal(#plugins, 1, "neotest plugin count")
 assert_equal(plugins[1], "nvim-neotest/neotest-python", "pytest neotest plugin")
 assert_equal(#framework.neotest_debug_plugins(), 1, "neotest debug plugin count")
 assert_equal(framework.neotest_debug_plugins()[1], "mfussenegger/nvim-dap", "pytest debug plugin")
+assert_equal(framework.has_neotest("pytest"), true, "pytest neotest support")
+assert_equal(vim.inspect(framework.filetypes("pytest")), '{ "python" }', "pytest filetypes")
 assert_equal(framework.supports_debug("pytest"), true, "pytest debug support")
 
 local custom_adapter = {
-  build_command = function(_, args)
-    return vim.list_extend({ "custom-runner" }, vim.deepcopy(args))
+  build_command = function(options, args)
+    return vim.list_extend({ options.runner or "custom-runner" }, vim.deepcopy(args))
   end,
 }
 framework.register("custom", custom_adapter)
 cfg.testing.framework = "custom"
+cfg.testing.frameworks.custom = { runner = "custom-command" }
 local custom_command = testing.build_profile_command("unit")
-assert_equal(table.concat(custom_command, " "), "custom-runner tests/unit", "custom framework adapter")
-assert_equal(framework.neotest_adapter("custom", cfg), nil, "framework without neotest adapter")
+assert_equal(table.concat(custom_command, " "), "custom-command tests/unit", "custom framework adapter")
+assert_equal(framework.neotest_adapter("custom", cfg.testing.frameworks.custom), nil, "framework without neotest adapter")
+assert_equal(framework.has_neotest("custom"), false, "framework without neotest support")
 assert_equal(framework.supports_debug("custom"), false, "framework without debug support")
+assert_equal(#framework.filetypes("custom"), 0, "framework without filetypes")
+
+local duplicate_ok = pcall(framework.register, "custom", custom_adapter)
+assert_equal(duplicate_ok, false, "duplicate framework registration is rejected")
 
 local names = vim.fn.getcompletion("", "file")
 assert_true(type(names) == "table", "headless runtime")
