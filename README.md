@@ -45,7 +45,6 @@ python:
 
 testing:
   framework: pytest
-  runner: pytest
   profiles:
     default:
       - tests
@@ -84,7 +83,8 @@ Pytest execution is configurable and is built from three independent pieces:
 
 - `python.package_manager` controls the environment prefix;
 - `testing.framework` selects the test framework adapter;
-- `testing.runner` and `testing.profiles` provide framework-specific command inputs.
+- `testing.frameworks.<name>.runner` provides framework-specific command inputs;
+- `testing.profiles` provides reusable argument lists.
 
 Supported package-manager shortcuts are `poetry`, `uv`, `pipenv`, and `none`. Any other non-empty value is treated as an executable prefix.
 
@@ -103,11 +103,11 @@ The command-generation layer is isolated in `lua/huginn/testing.lua`, while `lua
 
 ## AI
 
-AI integration is provider-oriented. Huginn can connect to OpenAI-compatible endpoints and can authenticate desktop users through standard OIDC Authorization Code + PKCE.
+AI integration is provider-oriented. Huginn supports the built-in `openai` provider and custom `openai_compatible` providers. Custom providers currently use OIDC Authorization Code + PKCE for desktop authentication.
 
 Set `ai.enabled: false` to disable CodeCompanion, AI keymaps and Huginn AI commands entirely.
 
-Example provider configuration:
+The built-in `openai` provider does not require an entry in `ai.providers`. For a custom provider, the selected name must exist in `ai.providers`, use `type: openai_compatible`, and define OIDC authentication. Example:
 
 ```yaml
 ai:
@@ -124,7 +124,7 @@ ai:
         client_id: huginn
 ```
 
-Run `:HuginnAIAuth` to open the corporate login page. Huginn starts a temporary localhost callback, receives the authorization code, exchanges it for tokens, and stores the credential outside the repository.
+Run `:HuginnAIAuth` to open the configured login page. Huginn starts a temporary `127.0.0.1` callback, receives the authorization code, exchanges it for tokens, and stores the credential outside the repository.
 
 Usage is intentionally lightweight: CodeCompanion-reported token usage is counted for the current Neovim session. If the provider does not report usage, Huginn falls back to CodeCompanion's estimate. Set `ai.usage.budget_tokens` and `ai.usage.cost_per_million_tokens` to see remaining session budget and an estimated cost.
 
@@ -136,9 +136,9 @@ Authentication commands:
 - `:HuginnAIStatus` — show authentication status
 - `:HuginnAILogout` — remove the locally stored credential
 
-The credential is stored under Neovim's data directory with restrictive file permissions. Access and refresh tokens are never stored in `.sdet.yaml`.
+The credential is stored under Neovim's data directory with restrictive file permissions. Access and refresh tokens are never stored in `.sdet.yaml`. Newly issued credentials track their access-token expiry; an expired credential is treated as unauthenticated and must be refreshed by running `:HuginnAIAuth` again.
 
-The OIDC client must be registered as a public desktop client and allow a localhost redirect URI. Huginn uses PKCE with the S256 challenge method.
+The OIDC client must be registered as a public desktop client and allow the loopback `127.0.0.1` redirect URI. Huginn uses PKCE with the S256 challenge method.
 
 Huginn does not require a corporate CLI for this flow.
 
