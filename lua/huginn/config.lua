@@ -33,6 +33,119 @@ local function merge(dst, src)
   end
 end
 
+local function notify_invalid(path, message)
+  vim.notify(("Huginn: invalid configuration in %s: %s"):format(path, message), vim.log.levels.ERROR)
+end
+
+local function validate_string(value, path)
+  if type(value) ~= "string" or value == "" then
+    return false, ("%s must be a non-empty string"):format(path)
+  end
+  return true
+end
+
+local function validate_string_map(value, path)
+  if type(value) ~= "table" or vim.tbl_islist(value) then
+    return false, ("%s must be an object"):format(path)
+  end
+
+  for key, item in pairs(value) do
+    if type(key) ~= "string" then
+      return false, ("%s keys must be strings"):format(path)
+    end
+    local ok, err = validate_string(item, ("%s.%s"):format(path, key))
+    if not ok then
+      return false, err
+    end
+  end
+
+  return true
+end
+
+local function validate_section(section, value)
+  if type(value) ~= "table" or vim.tbl_islist(value) then
+    return false, ("%s must be an object"):format(section)
+  end
+
+  local allowed = {
+    python = {
+      package_manager = true,
+      formatter = true,
+      linter = true,
+      type_checker = true,
+    },
+    testing = {
+      runner = true,
+      profiles = true,
+    },
+    ai = {
+      enabled = true,
+      provider = true,
+      model = true,
+      instructions = true,
+    },
+  }
+
+  for key, item in pairs(value) do
+    if not allowed[section][key] then
+      return false, ("unknown key '%s.%s'"):format(section, key)
+    end
+
+    if section == "testing" and key == "profiles" then
+      local ok, err = validate_string_map(item, "testing.profiles")
+      if not ok then
+        return false, err
+      end
+    elseif section == "ai" and key == "enabled" then
+      if type(item) ~= "boolean" then
+        return false, "ai.enabled must be a boolean"
+      end
+    elseif section == "ai" and key == "instructions" then
+      if type(item) ~= "table" or not vim.tbl_islist(item) then
+        return false, "ai.instructions must be an array"
+      end
+      for index, instruction in ipairs(item) do
+        local ok, err = validate_string(instruction, ("ai.instructions[%d]"):format(index))
+        if not ok then
+          return false, err
+        end
+      end
+    else
+      local ok, err = validate_string(item, ("%s.%s"):format(section, key))
+      if not ok then
+        return false, err
+      end
+    end
+  end
+
+  return true
+end
+
+local function validate(data)
+  if type(data) ~= "table" or vim.tbl_islist(data) then
+    return false, "configuration root must be an object"
+  end
+
+  local allowed = {
+    python = true,
+    testing = true,
+    ai = true,
+  }
+
+  for section, value in pairs(data) do
+    if not allowed[section] then
+      return false, ("unknown top-level key '%s'"):format(section)
+    end
+
+    local ok, err = validate_section(section, value)
+    if not ok then
+      return false, err
+    end
+  end
+
+  return true
+end
+
 local function read_yaml(path)
   if vim.fn.filereadable(path) ~= 1 then
     return nil
@@ -40,18 +153,19 @@ local function read_yaml(path)
 
   local ok, yaml = pcall(require, "yaml")
   if not ok then
-    vim.notify("Huginn: YAML parser is unavailable", vim.log.levels.ERROR)
+    notify_invalid(path, "YAML parser is unavailable")
     return nil
   end
 
   local data, err = yaml.read(path)
   if not data then
-    vim.notify(("Huginn: failed to parse %s: %s"):format(path, err or "unknown error"), vim.log.levels.ERROR)
+    notify_invalid(path, err or "failed to parse YAML")
     return nil
   end
 
-  if type(data) ~= "table" then
-    vim.notify(("Huginn: %s must contain a YAML object"):format(path), vim.log.levels.ERROR)
+  local valid, validation_error = validate(data)
+  if not valid then
+    notify_invalid(path, validation_error)
     return nil
   end
 
