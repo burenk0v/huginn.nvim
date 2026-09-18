@@ -21,7 +21,7 @@ jobs:
         run: |
           set -euo pipefail
           find . -name '*.lua' -not -path './.git/*' -print0 |
-            xargs -0 -n1 lua5.1 -p
+            xargs -0 -n1 luac5.1 -p
 
       - name: Validate JSON
         run: python -m json.tool config/schema.json >/dev/null
