@@ -47,4 +47,5 @@ jobs:
             --cmd "set rtp^=/tmp/yaml.nvim" \
             -c "luafile tests/smoke_config.lua" \
             -c "luafile tests/smoke_init.lua" \
+            -c "luafile tests/smoke_auth.lua" \
             -c "qa!"
