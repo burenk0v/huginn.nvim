@@ -25,3 +25,25 @@ jobs:
 
       - name: Validate JSON
         run: python -m json.tool config/schema.json >/dev/null
+
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Neovim
+        run: |
+          curl -LO https://github.com/neovim/neovim/releases/download/v0.11.6/nvim-linux-x86_64.tar.gz
+          sudo tar -C /opt -xzf nvim-linux-x86_64.tar.gz
+          sudo ln -sf /opt/nvim-linux-x86_64/bin/nvim /usr/local/bin/nvim
+
+      - name: Install YAML parser
+        run: git clone --depth 1 https://github.com/jedi-knights/yaml.nvim.git /tmp/yaml.nvim
+
+      - name: Run smoke tests
+        run: |
+          nvim --headless -u NONE \
+            --cmd "set rtp^=$PWD" \
+            --cmd "set rtp^=/tmp/yaml.nvim" \
+            -c "luafile tests/smoke_config.lua" \
+            -c "qa!"

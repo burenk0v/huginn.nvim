@@ -1,46 +1,25 @@
 local config = require("huginn.config")
+local testing = require("huginn.testing")
 
 local M = {}
 
-local function split_args(value)
-  return vim.split(value, "%s+", { trimempty = true })
-end
-
-local function command_prefix()
-  local manager = config.get().python.package_manager
-
-  if manager == "poetry" then
-    return { "poetry", "run" }
-  elseif manager == "uv" then
-    return { "uv", "run" }
-  elseif manager == "pipenv" then
-    return { "pipenv", "run" }
-  elseif manager == "none" or manager == "" then
-    return {}
-  end
-
-  return { manager }
-end
-
-local function run_command(args)
-  local command = command_prefix()
-  for _, arg in ipairs(args or {}) do
-    table.insert(command, arg)
-  end
-
+local function run_terminal(command)
   vim.cmd("botright split | terminal " .. table.concat(vim.tbl_map(vim.fn.shellescape, command), " "))
 end
 
-local function run_profile(name)
-  local cfg = config.get()
-  local profile = cfg.testing.profiles[name]
+local function run_command(args)
+  run_terminal(testing.build_command(args))
+end
 
-  if not profile then
+local function run_profile(name)
+  local command = testing.build_profile_command(name)
+
+  if not command then
     vim.notify(("Huginn: unknown pytest profile '%s'"):format(name), vim.log.levels.ERROR)
     return
   end
 
-  run_command(vim.list_extend({ cfg.testing.runner }, vim.deepcopy(profile)))
+  run_terminal(command)
 end
 
 function M.setup()
@@ -65,7 +44,7 @@ function M.setup()
   vim.keymap.set("n", "<leader>ta", function()
     local args = vim.fn.input("test args: ")
     if args ~= "" then
-      run_command(vim.list_extend({ config.get().testing.runner }, split_args(args)))
+      run_command(vim.list_extend({ config.get().testing.runner }, testing.split_args(args)))
     end
   end, { desc = "Run tests with arguments" })
 

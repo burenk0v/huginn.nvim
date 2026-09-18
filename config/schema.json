@@ -2,21 +2,23 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Huginn SDET configuration",
   "type": "object",
+  "additionalProperties": false,
   "properties": {
     "python": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
-        "package_manager": { "type": "string" },
-        "formatter": { "type": "string" },
-        "linter": { "type": "string" },
-        "type_checker": { "type": "string" }
-      },
-      "additionalProperties": true
+        "package_manager": { "type": "string", "minLength": 1 },
+        "formatter": { "type": "string", "minLength": 1 },
+        "linter": { "type": "string", "minLength": 1 },
+        "type_checker": { "type": "string", "minLength": 1 }
+      }
     },
     "testing": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
-        "runner": { "type": "string" },
+        "runner": { "type": "string", "minLength": 1 },
         "profiles": {
           "type": "object",
           "additionalProperties": {
@@ -24,22 +26,20 @@
             "items": { "type": "string" }
           }
         }
-      },
-      "additionalProperties": true
+      }
     },
     "ai": {
       "type": "object",
+      "additionalProperties": false,
       "properties": {
         "enabled": { "type": "boolean" },
-        "provider": { "type": "string" },
-        "model": { "type": "string" },
+        "provider": { "type": "string", "minLength": 1 },
+        "model": { "type": "string", "minLength": 1 },
         "instructions": {
           "type": "array",
           "items": { "type": "string" }
         }
-      },
-      "additionalProperties": true
+      }
     }
-  },
-  "additionalProperties": true
+  }
 }
