@@ -85,3 +85,51 @@ Secrets must come from the environment or an external secret manager. They must 
 ## License
 
 Apache-2.0.
+
+## Configuration
+
+Huginn uses a three-layer configuration model:
+
+1. built-in defaults;
+2. project `.sdet.yaml`;
+3. optional user-local `huginn.local.yaml` in Neovim's config directory.
+
+Project configuration is intended for team conventions. User-local configuration is for machine- or developer-specific settings and should not be committed.
+
+Example:
+
+```yaml
+python:
+  package_manager: poetry
+  formatter: ruff
+  linter: ruff
+  type_checker: ty
+
+testing:
+  runner: pytest
+  profiles:
+    default:
+      - tests
+    unit:
+      - tests/unit
+    integration:
+      - tests/integration
+
+ai:
+  enabled: true
+  provider: openai
+  model: gpt-5
+  instructions: []
+```
+
+The schema is available at `config/schema.json`; YAML language-server support associates it with `.sdet.yaml`.
+
+Test keymaps:
+
+- `<leader>tt` — default profile
+- `<leader>tf` — current file
+- `<leader>tp` — choose a configured profile
+- `<leader>ta` — arbitrary test arguments
+- `<leader>tr` — nearest test through neotest
+- `<leader>td` — debug nearest test
+
