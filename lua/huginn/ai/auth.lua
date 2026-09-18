@@ -299,7 +299,10 @@ server.handle_request()
               "code_challenge=" .. vim.uri_encode(challenge),
               "code_challenge_method=S256",
             }, "&")
-            open_browser(discovery.authorization_endpoint .. "?" .. query)
+            if not open_browser(discovery.authorization_endpoint .. "?" .. query) then
+              stop_server()
+              return
+            end
             vim.notify("Huginn: complete AI authentication in your browser", vim.log.levels.INFO)
           else
             local params = {}
