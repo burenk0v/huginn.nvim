@@ -17,10 +17,22 @@ end
 
 local function write_all(data)
   local path = storage_path()
-  local file = assert(io.open(path, "w"))
-  file:write(vim.json.encode(data))
-  file:close()
+  local content = vim.json.encode(data)
+  local fd, err = vim.uv.fs_open(path, "w", 384)
+  if not fd then
+    vim.notify("Huginn: failed to open credential storage: " .. err, vim.log.levels.ERROR)
+    return false
+  end
+
+  local written, write_err = vim.uv.fs_write(fd, content, -1)
+  vim.uv.fs_close(fd)
+  if not written then
+    vim.notify("Huginn: failed to write credential storage: " .. write_err, vim.log.levels.ERROR)
+    return false
+  end
+
   pcall(vim.fn.setfperm, path, "rw-------")
+  return true
 end
 
 function M.get(provider)
