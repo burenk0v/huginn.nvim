@@ -151,4 +151,3 @@ require("lazy").setup({
 })
 
 usage.setup()
-})
