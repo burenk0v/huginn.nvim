@@ -1,6 +1,7 @@
 local config = require("huginn.config")
 
 local M = {
+  setup_done = false,
   total_tokens = 0,
   requests = 0,
   chat_tokens = {},
@@ -52,6 +53,10 @@ function M.snapshot()
 end
 
 function M.setup()
+  if M.setup_done then
+    return
+  end
+  M.setup_done = true
   vim.api.nvim_create_autocmd("User", {
     pattern = "CodeCompanionChatCreated",
     callback = function(args)

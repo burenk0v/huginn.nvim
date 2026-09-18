@@ -23,7 +23,7 @@ testing:
     pytest:
       runner: pytest
 ai:
-  enabled: false
+  enabled: true
 ]], "\n", { plain = true }), root .. "/.sdet.yaml")
 
 -- Keep the smoke test offline: emulate lazy.nvim's setup boundary while
@@ -38,10 +38,8 @@ package.loaded["lazy"] = {
   end,
 }
 
-package.loaded["huginn.keymaps"] = {
-  setup = function() end,
-}
 
+require("huginn").setup()
 require("huginn").setup()
 
 assert_true(type(captured_specs) == "table", "Huginn initializes the lazy.nvim plugin specification")
