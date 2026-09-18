@@ -3,6 +3,7 @@ local config = require("huginn.config")
 local M = {
   total_tokens = 0,
   requests = 0,
+  chat_tokens = {},
 }
 
 function M.record(tokens)
@@ -12,6 +13,25 @@ function M.record(tokens)
   end
   M.total_tokens = M.total_tokens + tokens
   M.requests = M.requests + 1
+end
+
+function M.record_chat(bufnr, tokens)
+  tokens = tonumber(tokens)
+  if not tokens or tokens < 0 then
+    return
+  end
+
+  local previous = M.chat_tokens[bufnr] or 0
+  if tokens < previous then
+    previous = 0
+  end
+
+  local delta = tokens - previous
+  M.chat_tokens[bufnr] = tokens
+
+  if delta > 0 then
+    M.record(delta)
+  end
 end
 
 function M.snapshot()
@@ -35,13 +55,14 @@ function M.setup()
   vim.api.nvim_create_autocmd("User", {
     pattern = "CodeCompanionChatCreated",
     callback = function(args)
-      local chat = require("codecompanion").buf_get_chat(args.data.bufnr)
+      local bufnr = args.data.bufnr
+      local chat = require("codecompanion").buf_get_chat(bufnr)
       if not chat then
         return
       end
 
       chat:add_callback("on_checkpoint", function(_, data)
-        M.record(data.reported_tokens or data.estimated_tokens)
+        M.record_chat(bufnr, data.reported_tokens or data.estimated_tokens)
       end)
     end,
   })
