@@ -32,7 +32,7 @@ local function write_all(data)
 
   local offset = 0
   while offset < #content do
-    local written, write_err = vim.uv.fs_write(fd, content:sub(offset + 1), offset)
+    local written, write_err = vim.uv.fs_write(fd, content, offset)
     if not written or written == 0 then
       vim.uv.fs_close(fd)
       pcall(os.remove, temp_path)
