@@ -9,7 +9,11 @@ M.defaults = {
   },
   testing = {
     framework = "pytest",
-    runner = "pytest",
+    frameworks = {
+      pytest = {
+        runner = "pytest",
+      },
+    },
     profiles = {
       default = { "tests" },
     },
@@ -64,6 +68,27 @@ local function validate_profiles(value)
     end
     for index, arg in ipairs(profile) do
       local ok, err = validate_string(arg, ("testing.profiles.%s[%d]"):format(name, index))
+      if not ok then return false, err end
+    end
+  end
+  return true
+end
+
+local function validate_frameworks(value)
+  if type(value) ~= "table" or vim.tbl_islist(value) then
+    return false, "testing.frameworks must be an object"
+  end
+  for name, options in pairs(value) do
+    if type(name) ~= "string" or name == "" or type(options) ~= "table" or vim.tbl_islist(options) then
+      return false, "testing.frameworks must contain named objects"
+    end
+    for key in pairs(options) do
+      if key ~= "runner" then
+        return false, ("unknown key 'testing.frameworks.%s.%s'"):format(name, key)
+      end
+    end
+    if options.runner ~= nil then
+      local ok, err = validate_string(options.runner, ("testing.frameworks.%s.runner"):format(name))
       if not ok then return false, err end
     end
   end
@@ -127,13 +152,16 @@ local function validate_section(section, value)
   if type(value) ~= "table" or vim.tbl_islist(value) then return false, ("%s must be an object"):format(section) end
   local allowed = {
     python = { package_manager = true, formatter = true, linter = true, type_checker = true },
-    testing = { framework = true, runner = true, profiles = true },
+    testing = { framework = true, frameworks = true, profiles = true },
     ai = { enabled = true, provider = true, model = true, instructions = true, providers = true, usage = true },
   }
   for key, item in pairs(value) do
     if not allowed[section][key] then return false, ("unknown key '%s.%s'"):format(section, key) end
     if section == "testing" and key == "profiles" then
       local ok, err = validate_profiles(item)
+      if not ok then return false, err end
+    elseif section == "testing" and key == "frameworks" then
+      local ok, err = validate_frameworks(item)
       if not ok then return false, err end
     elseif section == "ai" and key == "enabled" then
       if type(item) ~= "boolean" then return false, "ai.enabled must be a boolean" end
