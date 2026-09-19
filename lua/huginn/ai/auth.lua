@@ -148,7 +148,7 @@ local function pkce_challenge(verifier)
 end
 
 local function run_curl(args, callback)
-  vim.system(args, { text = true }, function(result)
+  local ok, process = pcall(vim.system, args, { text = true }, function(result)
     if result.code ~= 0 then
       callback(nil, result.stderr ~= "" and result.stderr or "request failed")
       return
@@ -160,6 +160,9 @@ local function run_curl(args, callback)
     end
     callback(data)
   end)
+  if not ok then
+    callback(nil, tostring(process))
+  end
 end
 
 local function open_browser(url)
@@ -321,7 +324,7 @@ server.handle_request()
 
     vim.defer_fn(stop_server, 5 * 60 * 1000)
 
-    server_job = vim.system({ python, "-u", "-c", script, state }, {
+    local server_ok, server_or_error = pcall(vim.system, { python, "-u", "-c", script, state }, {
       text = true,
       stdout = function(_, data)
         if not data then return end
@@ -383,6 +386,11 @@ server.handle_request()
         end
       end,
     })
+    if not server_ok then
+      vim.notify("Huginn: failed to start OIDC callback server: " .. tostring(server_or_error), vim.log.levels.ERROR)
+      return
+    end
+    server_job = server_or_error
   end)
 end
 
