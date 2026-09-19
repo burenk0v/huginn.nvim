@@ -149,6 +149,28 @@ config.setup()
 assert_equal(config.get().ai.enabled, true, "built-in OpenAI provider remains valid")
 assert_equal(config.get().ai.provider, "openai", "built-in OpenAI provider is selected")
 
+-- Optional AI fields must reject explicit empty strings just like the schema.
+write(root .. "/project/.sdet.yaml", [[
+ai:
+  enabled: true
+  provider: openai
+  providers:
+    unused:
+      type: openai_compatible
+      endpoint: ""
+      model: ""
+      auth:
+        type: oidc
+        issuer: https://login.example.test
+        client_id: huginn
+        scope: ""
+]])
+config.setup()
+assert_equal(config.get().ai.provider, "openai", "invalid unused provider configuration is ignored")
+assert_equal(config.get().ai.providers.unused, nil, "invalid unused provider is not merged")
+
+
+
 local defaults = vim.deepcopy(config.defaults)
 assert_equal(defaults.python.package_manager, "poetry", "default YAML contract package manager")
 assert_equal(defaults.testing.frameworks.pytest.runner, "pytest", "default YAML contract framework runner")
