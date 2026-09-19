@@ -71,10 +71,6 @@ local function write_all(data)
     return false
   end
 
-  if vim.fn.setfperm(path, "rw-------") ~= 0 then
-    vim.notify("Huginn: failed to set credential storage permissions", vim.log.levels.ERROR)
-    return false
-  end
   return true
 end
 
