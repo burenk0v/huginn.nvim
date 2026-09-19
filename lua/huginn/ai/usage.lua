@@ -59,14 +59,22 @@ function M.setup()
   vim.api.nvim_create_autocmd("User", {
     pattern = "CodeCompanionChatCreated",
     callback = function(args)
-      local bufnr = args.data.bufnr
-      local chat = require("codecompanion").buf_get_chat(bufnr)
-      if not chat then
+      local data = args and args.data
+      local bufnr = data and data.bufnr
+      if type(bufnr) ~= "number" then
         return
       end
 
-      chat:add_callback("on_checkpoint", function(_, data)
-        M.record_chat(bufnr, data.reported_tokens or data.estimated_tokens)
+      local ok, chat = pcall(require("codecompanion").buf_get_chat, bufnr)
+      if not ok or not chat or type(chat.add_callback) ~= "function" then
+        return
+      end
+
+      chat:add_callback("on_checkpoint", function(_, checkpoint)
+        if type(checkpoint) ~= "table" then
+          return
+        end
+        M.record_chat(bufnr, checkpoint.reported_tokens or checkpoint.estimated_tokens)
       end)
     end,
   })
