@@ -84,12 +84,24 @@ function M.get(provider)
     return nil
   end
   local credentials = data[provider]
-  if not credentials then
+  if type(credentials) ~= "table" or vim.tbl_islist(credentials) then
+    return nil
+  end
+  if type(credentials.access_token) ~= "string" or credentials.access_token == "" then
+    return nil
+  end
+  if credentials.token_type ~= nil and type(credentials.token_type) ~= "string" then
+    return nil
+  end
+  if credentials.refresh_token ~= nil and type(credentials.refresh_token) ~= "string" then
     return nil
   end
 
-  if credentials.expires_at and tonumber(credentials.expires_at) and tonumber(credentials.expires_at) <= os.time() then
-    return nil
+  if credentials.expires_at ~= nil then
+    local expires_at = tonumber(credentials.expires_at)
+    if not expires_at or expires_at <= os.time() then
+      return nil
+    end
   end
 
   return credentials
