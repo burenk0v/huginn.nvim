@@ -99,7 +99,7 @@ Keymaps:
 - `<leader>tr` — run the nearest test through neotest
 - `<leader>td` — debug the nearest test
 
-The command-generation layer is isolated in `lua/huginn/testing.lua`, while `lua/huginn/framework.lua` owns framework adapter registration, command integration, and optional Neotest integration. Huginn's Neotest setup no longer selects `neotest-python` directly.
+The command-generation layer is isolated in `lua/huginn/testing.lua`, while `lua/huginn/framework/` owns framework adapter registration, command integration, and optional Neotest integration. Huginn's Neotest setup no longer selects `neotest-python` directly.
 
 ## AI
 
@@ -157,19 +157,16 @@ Huginn does not require a corporate CLI for this flow.
 lua/huginn/
 ├── config.lua     # configuration loading and validation
 ├── ai/            # AI provider authentication and integration
-├── framework.lua  # test framework adapter registry
+├── framework/     # test framework registry and built-in adapters
 ├── testing.lua    # test command generation
 ├── keymaps.lua    # editor actions
 ├── lazy.lua       # plugin declarations and integration setup
 └── init.lua       # entry point
 ```
 
-## Roadmap
+## Project status
 
-1. Stabilize Python tooling and test execution.
-2. Verify and complete the current AI integration against the CodeCompanion API.
-3. Add framework adapters driven by project configuration.
-4. Add richer SDET workflows once the configuration and integration boundaries are stable.
+Huginn is currently in a stabilization phase. Changes are focused on correctness, error handling, security-sensitive boundaries, and keeping the existing integration surface predictable.
 
 ## License
 
