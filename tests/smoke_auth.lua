@@ -41,6 +41,21 @@ invalid_shape:write(vim.json.encode({ target = "not-a-credential-object" }))
 invalid_shape:close()
 assert_equal(auth.status("target"), false, "invalid credential record shape is not treated as authenticated")
 
+local invalid_fields = assert(io.open(credentials_path, "w"))
+invalid_fields:write(vim.json.encode({
+  target = { access_token = "target-token", expires_at = "not-a-timestamp" },
+}))
+invalid_fields:close()
+assert_equal(auth.status("target"), false, "invalid credential expiry is not treated as authenticated")
+
+local missing_token = assert(io.open(credentials_path, "w"))
+missing_token:write(vim.json.encode({
+  target = { expires_at = os.time() + 3600 },
+}))
+missing_token:close()
+assert_equal(auth.status("target"), false, "credential without access token is not authenticated")
+
+
 local restored_malformed = assert(io.open(credentials_path, "w"))
 restored_malformed:write("{not valid json")
 restored_malformed:close()
