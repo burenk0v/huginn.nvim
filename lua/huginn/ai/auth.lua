@@ -262,7 +262,6 @@ local function exchange_code(provider_name, client_id, redirect_uri, verifier, t
     if not data then
       return
     end
-    local expires_in = tonumber(tokens.expires_in)
     data[provider_name] = {
       access_token = tokens.access_token,
       refresh_token = tokens.refresh_token,
