@@ -18,8 +18,26 @@ local function read_all()
   if not path then
     return nil
   end
-  local file = io.open(path, "r")
-  if not file then return {} end
+  local stat, stat_err = vim.uv.fs_stat(path)
+  if not stat then
+    if stat_err == "ENOENT" then
+      return {}
+    end
+    vim.notify(
+      "Huginn: failed to access credential storage: " .. (stat_err or "unknown error"),
+      vim.log.levels.ERROR
+    )
+    return nil
+  end
+
+  local file, open_err = io.open(path, "r")
+  if not file then
+    vim.notify(
+      "Huginn: failed to open credential storage: " .. (open_err or "unknown error"),
+      vim.log.levels.ERROR
+    )
+    return nil
+  end
   local content, read_err = file:read("*a")
   local closed, close_err = file:close()
   if not content or not closed then
