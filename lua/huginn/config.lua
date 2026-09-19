@@ -114,7 +114,7 @@ local function validate_auth(provider_name, auth)
     if not ok then return false, err end
     ok, err = validate_string(auth.client_id, ("ai.providers.%s.auth.client_id"):format(provider_name))
     if not ok then return false, err end
-    if auth.scope then
+    if auth.scope ~= nil then
       ok, err = validate_string(auth.scope, ("ai.providers.%s.auth.scope"):format(provider_name))
       if not ok then return false, err end
     end
@@ -138,11 +138,11 @@ local function validate_ai_providers(value)
     if provider.type ~= "openai_compatible" then
       return false, ("ai.providers.%s.type must be openai_compatible"):format(name)
     end
-    if provider.endpoint then
+    if provider.endpoint ~= nil then
       ok, err = validate_string(provider.endpoint, ("ai.providers.%s.endpoint"):format(name))
       if not ok then return false, err end
     end
-    if provider.model then
+    if provider.model ~= nil then
       ok, err = validate_string(provider.model, ("ai.providers.%s.model"):format(name))
       if not ok then return false, err end
     end
