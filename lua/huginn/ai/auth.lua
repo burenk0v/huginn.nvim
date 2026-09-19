@@ -116,8 +116,8 @@ local function run_curl(args, callback)
       return
     end
     local ok, data = pcall(vim.json.decode, result.stdout)
-    if not ok then
-      callback(nil, "invalid JSON response")
+    if not ok or type(data) ~= "table" or vim.tbl_islist(data) then
+      callback(nil, "invalid JSON object response")
       return
     end
     callback(data)
