@@ -4,14 +4,20 @@ local function storage_path()
   local dir = vim.fn.stdpath("data") .. "/huginn"
   if vim.fn.mkdir(dir, "p") == 0 and vim.fn.isdirectory(dir) ~= 1 then
     vim.notify("Huginn: failed to create credential storage directory", vim.log.levels.ERROR)
-  elseif vim.fn.setfperm(dir, "rwx------") ~= 0 then
+    return nil
+  end
+  if vim.fn.setfperm(dir, "rwx------") ~= 0 then
     vim.notify("Huginn: failed to set credential storage directory permissions", vim.log.levels.ERROR)
+    return nil
   end
   return dir .. "/credentials.json"
 end
 
 local function read_all()
   local path = storage_path()
+  if not path then
+    return nil
+  end
   local file = io.open(path, "r")
   if not file then return {} end
   local content, read_err = file:read("*a")
@@ -35,6 +41,9 @@ local write_sequence = 0
 
 local function write_all(data)
   local path = storage_path()
+  if not path then
+    return false
+  end
   local content = vim.json.encode(data)
   write_sequence = write_sequence + 1
   local temp_path = ("%s.tmp.%d.%d"):format(path, vim.fn.getpid(), write_sequence)
@@ -118,6 +127,9 @@ function M.logout(provider)
   end
 
   local path = storage_path()
+  if not path then
+    return false
+  end
   local ok, err = os.remove(path)
   if ok then
     return true
