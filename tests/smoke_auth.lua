@@ -16,7 +16,7 @@ file:write(vim.json.encode({
 file:close()
 
 local auth = require("huginn.ai.auth")
-auth.logout("target")
+assert_equal(auth.logout("target"), true, "credential logout succeeds")
 
 assert_equal(vim.fn.getfperm(data_dir), "rwx------", "credential directory permissions")
 assert_equal(vim.fn.getfperm(credentials_path), "rw-------", "credential file permissions")
