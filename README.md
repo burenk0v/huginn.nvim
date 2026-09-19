@@ -164,7 +164,30 @@ lua/huginn/
 └── init.lua       # entry point
 ```
 
+## Installation
+
+With lazy.nvim:
+
+```lua
+{
+  "burenk0v/huginn.nvim",
+  dependencies = {
+    "folke/lazy.nvim",
+  },
+}
+```
+
+Huginn bootstraps `lazy.nvim` automatically when it is not already installed. It requires Neovim 0.11+.
+
+For a project, copy the bundled `config/default.yaml` to `.sdet.yaml` and adapt it to the project's test workflow. Keep machine-specific settings in the user-local `huginn.local.yaml`.
+
 ## Project status
+
+Huginn has completed its stabilization phase and is being prepared for its first release. The current baseline focuses on predictable configuration, framework boundaries, AI authentication, credential handling, and failure-safe plugin integrations.
+
+The release target is **v0.1.0**. No new feature work is planned as part of this release preparation.
+
+
 
 Huginn is currently in a stabilization phase. Changes are focused on correctness, error handling, security-sensitive boundaries, and keeping the existing integration surface predictable.
 
