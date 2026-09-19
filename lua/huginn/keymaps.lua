@@ -27,6 +27,13 @@ local function run_profile(name)
   run_terminal(command)
 end
 
+local function create_user_command(name, callback, opts)
+  if vim.fn.exists(":" .. name) == 2 then
+    return
+  end
+  vim.api.nvim_create_user_command(name, callback, opts)
+end
+
 local function ai_provider()
   local cfg = config.get()
   if not cfg.ai.enabled then
@@ -98,14 +105,14 @@ function M.setup()
   vim.keymap.set("n", "<leader>aa", "<cmd>CodeCompanionActions<cr>", { desc = "AI actions" })
   vim.keymap.set("v", "<leader>ac", "<cmd>CodeCompanionChat<cr>", { desc = "AI chat" })
 
-  vim.api.nvim_create_user_command("HuginnAIAuth", function()
+  create_user_command("HuginnAIAuth", function()
     local name, provider = ai_provider()
     if name and provider then
       auth.login(name, provider)
     end
   end, { desc = "Authenticate the configured Huginn AI provider" })
 
-  vim.api.nvim_create_user_command("HuginnAIStatus", function()
+  create_user_command("HuginnAIStatus", function()
     local name, provider = ai_provider()
     if not name or not provider then return end
     local authenticated = auth.status(name)
@@ -115,11 +122,11 @@ function M.setup()
     )
   end, { desc = "Show authentication status" })
 
-  vim.api.nvim_create_user_command("HuginnAIUsage", function()
+  create_user_command("HuginnAIUsage", function()
     usage.status()
   end, { desc = "Show AI token usage and cost" })
 
-  vim.api.nvim_create_user_command("HuginnAILogout", function()
+  create_user_command("HuginnAILogout", function()
     local name = ai_provider()
     if name then
       if auth.logout(name) then
