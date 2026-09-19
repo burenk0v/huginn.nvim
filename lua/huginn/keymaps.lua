@@ -51,7 +51,6 @@ function M.setup()
   if setup_done then
     return
   end
-  setup_done = true
   vim.keymap.set("n", "<leader>tt", function() run_profile("default") end, { desc = "Run default test profile" })
 
   vim.keymap.set("n", "<leader>tf", function()
@@ -92,6 +91,7 @@ function M.setup()
   end, { desc = "Debug nearest test" })
 
   if not config.get().ai.enabled then
+    setup_done = true
     return
   end
 
@@ -127,6 +127,7 @@ function M.setup()
       end
     end
   end, { desc = "Remove locally stored Huginn AI credentials" })
+  setup_done = true
 end
 
 return M
