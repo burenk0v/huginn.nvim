@@ -2,8 +2,11 @@ local M = {}
 
 local function storage_path()
   local dir = vim.fn.stdpath("data") .. "/huginn"
-  vim.fn.mkdir(dir, "p")
-  pcall(vim.fn.setfperm, dir, "rwx------")
+  if vim.fn.mkdir(dir, "p") == 0 and vim.fn.isdirectory(dir) ~= 1 then
+    vim.notify("Huginn: failed to create credential storage directory", vim.log.levels.ERROR)
+  elseif vim.fn.setfperm(dir, "rwx------") ~= 0 then
+    vim.notify("Huginn: failed to set credential storage directory permissions", vim.log.levels.ERROR)
+  end
   return dir .. "/credentials.json"
 end
 
@@ -47,7 +50,12 @@ local function write_all(data)
     offset = offset + written
   end
 
-  vim.uv.fs_close(fd)
+  local closed, close_err = vim.uv.fs_close(fd)
+  if not closed then
+    pcall(os.remove, temp_path)
+    vim.notify("Huginn: failed to close credential storage: " .. (close_err or "unknown error"), vim.log.levels.ERROR)
+    return false
+  end
 
   local renamed, rename_err = vim.uv.fs_rename(temp_path, path)
   if not renamed then
@@ -56,7 +64,10 @@ local function write_all(data)
     return false
   end
 
-  pcall(vim.fn.setfperm, path, "rw-------")
+  if vim.fn.setfperm(path, "rw-------") ~= 0 then
+    vim.notify("Huginn: failed to set credential storage permissions", vim.log.levels.ERROR)
+    return false
+  end
   return true
 end
 
