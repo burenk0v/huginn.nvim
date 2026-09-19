@@ -209,9 +209,23 @@ local function exchange_code(provider_name, client_id, redirect_uri, verifier, t
     "--data", body,
     token_endpoint,
   }, function(tokens, err)
-    if not tokens or not tokens.access_token then
-      vim.notify("Huginn: OIDC token exchange failed: " .. (err or "missing access_token"), vim.log.levels.ERROR)
+    if not tokens
+      or type(tokens.access_token) ~= "string"
+      or tokens.access_token == ""
+      or (tokens.token_type ~= nil and type(tokens.token_type) ~= "string")
+      or (tokens.refresh_token ~= nil and type(tokens.refresh_token) ~= "string")
+    then
+      vim.notify("Huginn: OIDC token exchange failed: " .. (err or "invalid token response"), vim.log.levels.ERROR)
       return
+    end
+
+    local expires_in
+    if tokens.expires_in ~= nil then
+      expires_in = tonumber(tokens.expires_in)
+      if not expires_in or expires_in < 0 then
+        vim.notify("Huginn: OIDC token exchange failed: invalid expires_in", vim.log.levels.ERROR)
+        return
+      end
     end
 
     local data = read_all()
