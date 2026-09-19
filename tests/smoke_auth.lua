@@ -35,6 +35,15 @@ local malformed_file = assert(io.open(credentials_path, "w"))
 malformed_file:write("{not valid json")
 malformed_file:close()
 assert_equal(auth.status("target"), false, "malformed credential storage is not treated as authenticated")
+
+local invalid_shape = assert(io.open(credentials_path, "w"))
+invalid_shape:write(vim.json.encode({ target = "not-a-credential-object" }))
+invalid_shape:close()
+assert_equal(auth.status("target"), false, "invalid credential record shape is not treated as authenticated")
+
+local restored_malformed = assert(io.open(credentials_path, "w"))
+restored_malformed:write("{not valid json")
+restored_malformed:close()
 assert_equal(auth.logout("target"), false, "malformed credential storage rejects destructive updates")
 assert_equal(vim.fn.filereadable(credentials_path), 1, "malformed credential storage is preserved")
 

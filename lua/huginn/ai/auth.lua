@@ -14,8 +14,15 @@ local function read_all()
   local path = storage_path()
   local file = io.open(path, "r")
   if not file then return {} end
-  local content = file:read("*a")
-  file:close()
+  local content, read_err = file:read("*a")
+  local closed, close_err = file:close()
+  if not content or not closed then
+    vim.notify(
+      "Huginn: failed to read credential storage: " .. (read_err or close_err or "unknown error"),
+      vim.log.levels.ERROR
+    )
+    return nil
+  end
   local ok, data = pcall(vim.json.decode, content)
   if not ok or type(data) ~= "table" or vim.tbl_islist(data) then
     vim.notify("Huginn: credential storage contains invalid JSON", vim.log.levels.ERROR)
