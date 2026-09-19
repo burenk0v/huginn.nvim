@@ -262,6 +262,12 @@ print("PORT=" + str(server.server_port), flush=True)
 server.handle_request()
 ]]
 
+    local python = python_executable()
+    if not python then
+      vim.notify("Huginn: Python is required for the OIDC callback server", vim.log.levels.ERROR)
+      return
+    end
+
     local stdout = ""
     local port
     local server_job
