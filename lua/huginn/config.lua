@@ -214,6 +214,9 @@ local function validate_effective_ai(ai)
   if provider.type ~= "openai_compatible" then
     return false, ("ai.providers.%s.type must be openai_compatible"):format(ai.provider)
   end
+  if not provider.endpoint or provider.endpoint == "" then
+    return false, ("ai.providers.%s.endpoint is required"):format(ai.provider)
+  end
   if not provider.auth or provider.auth.type ~= "oidc" then
     return false, ("ai.providers.%s.auth.type must be oidc"):format(ai.provider)
   end
