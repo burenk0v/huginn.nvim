@@ -55,6 +55,12 @@ missing_token:write(vim.json.encode({
 missing_token:close()
 assert_equal(auth.status("target"), false, "credential without access token is not authenticated")
 
+-- Stored credentials with an expired timestamp are never authenticated.
+local expired = assert(io.open(credentials_path, "w"))
+expired:write(vim.json.encode({ target = { access_token = "target-token", expires_at = os.time() } }))
+expired:close()
+assert_equal(auth.status("target"), false, "expired credential is not authenticated")
+
 
 local restored_malformed = assert(io.open(credentials_path, "w"))
 restored_malformed:write("{not valid json")
