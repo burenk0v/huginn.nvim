@@ -99,6 +99,28 @@ assert_equal(duplicate_ok, false, "duplicate framework registration is rejected"
 local names = vim.fn.getcompletion("", "file")
 assert_true(type(names) == "table", "headless runtime")
 
+
+-- The usage hook must tolerate malformed external events without breaking setup.
+local usage_autocmd
+local original_create_autocmd = vim.api.nvim_create_autocmd
+vim.api.nvim_create_autocmd = function(event, opts)
+  if event == "User" and opts.pattern == "CodeCompanionChatCreated" then
+    usage_autocmd = opts.callback
+  end
+  return original_create_autocmd(event, opts)
+end
+usage.setup()
+vim.api.nvim_create_autocmd = original_create_autocmd
+assert_true(type(usage_autocmd) == "function", "AI usage callback is registered")
+usage_autocmd({})
+usage_autocmd({ data = {} })
+package.loaded["codecompanion"] = {
+  buf_get_chat = function()
+    error("unexpected malformed buffer lookup")
+  end,
+}
+usage_autocmd({ data = { bufnr = 1 } })
+
 usage.record_chat(10, 2500)
 usage.record_chat(10, 3000)
 usage.record_chat(11, 1200)
