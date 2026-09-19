@@ -7,11 +7,11 @@ function M.setup()
   if setup_done then
     return
   end
-  setup_done = true
 
   config.setup()
   require("huginn.lazy")
   require("huginn.keymaps").setup()
+  setup_done = true
 end
 
 return M
