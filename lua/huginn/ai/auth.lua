@@ -8,12 +8,17 @@ local function storage_path()
 end
 
 local function read_all()
-  local file = io.open(storage_path(), "r")
+  local path = storage_path()
+  local file = io.open(path, "r")
   if not file then return {} end
   local content = file:read("*a")
   file:close()
   local ok, data = pcall(vim.json.decode, content)
-  return ok and type(data) == "table" and data or {}
+  if not ok or type(data) ~= "table" or vim.tbl_islist(data) then
+    vim.notify("Huginn: credential storage contains invalid JSON", vim.log.levels.ERROR)
+    return nil
+  end
+  return data
 end
 
 local write_sequence = 0
@@ -56,7 +61,11 @@ local function write_all(data)
 end
 
 function M.get(provider)
-  local credentials = read_all()[provider]
+  local data = read_all()
+  if not data then
+    return nil
+  end
+  local credentials = data[provider]
   if not credentials then
     return nil
   end
@@ -74,6 +83,9 @@ end
 
 function M.logout(provider)
   local data = read_all()
+  if not data then
+    return false
+  end
   data[provider] = nil
   if next(data) then
     return write_all(data)
@@ -174,6 +186,9 @@ local function exchange_code(provider_name, client_id, redirect_uri, verifier, t
     end
 
     local data = read_all()
+    if not data then
+      return
+    end
     local expires_in = tonumber(tokens.expires_in)
     data[provider_name] = {
       access_token = tokens.access_token,

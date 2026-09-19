@@ -31,6 +31,13 @@ assert_equal(decoded.other.access_token, "other-token", "remaining credentials a
 local temp_files = vim.fn.glob(credentials_path .. ".tmp.*", false, true)
 assert_equal(#temp_files, 0, "temporary credential files are cleaned up")
 
+local malformed_file = assert(io.open(credentials_path, "w"))
+malformed_file:write("{not valid json")
+malformed_file:close()
+assert_equal(auth.status("target"), false, "malformed credential storage is not treated as authenticated")
+assert_equal(auth.logout("target"), false, "malformed credential storage rejects destructive updates")
+assert_equal(vim.fn.filereadable(credentials_path), 1, "malformed credential storage is preserved")
+
 vim.fn.delete(data_dir, "rf")
 print("Huginn credential storage smoke test: OK")
 vim.cmd("qa!")
