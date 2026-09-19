@@ -1,5 +1,10 @@
 # Huginn.nvim
 
+<p align="center">
+  <img src="assets/huginn-logo.svg" alt="Huginn.nvim — original raven logo" width="760">
+</p>
+
+
 **Huginn** is an opinionated Neovim environment for SDETs.
 
 > Think. Test. Automate.
