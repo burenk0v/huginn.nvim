@@ -309,8 +309,12 @@ function M.login(name, provider)
       return
     end
 
-    if not discovery.authorization_endpoint or not discovery.token_endpoint then
-      vim.notify("Huginn: OIDC discovery is missing required endpoints", vim.log.levels.ERROR)
+    if type(discovery.authorization_endpoint) ~= "string"
+      or discovery.authorization_endpoint == ""
+      or type(discovery.token_endpoint) ~= "string"
+      or discovery.token_endpoint == ""
+    then
+      vim.notify("Huginn: OIDC discovery returned invalid required endpoints", vim.log.levels.ERROR)
       return
     end
 
