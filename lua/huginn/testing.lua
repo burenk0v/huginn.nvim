@@ -31,9 +31,23 @@ function M.build_command(args)
 
   local options = cfg.testing.frameworks[cfg.testing.framework] or {}
   local command = command_prefix(cfg.python.package_manager)
-  local framework_command = adapter.build_command(options, args)
+  local ok, framework_command = pcall(adapter.build_command, options, args)
+  if not ok or type(framework_command) ~= "table" or not vim.tbl_islist(framework_command) then
+    vim.notify(
+      ("Huginn: framework '%s' returned an invalid test command"):format(cfg.testing.framework),
+      vim.log.levels.ERROR
+    )
+    return nil
+  end
 
   for _, arg in ipairs(framework_command) do
+    if type(arg) ~= "string" then
+      vim.notify(
+        ("Huginn: framework '%s' returned a test command with a non-string argument"):format(cfg.testing.framework),
+        vim.log.levels.ERROR
+      )
+      return nil
+    end
     table.insert(command, arg)
   end
 
