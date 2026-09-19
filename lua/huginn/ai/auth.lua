@@ -329,7 +329,10 @@ class Handler(http.server.BaseHTTPRequestHandler):
 
 server = http.server.HTTPServer(("127.0.0.1", 0), Handler)
 print("PORT=" + str(server.server_port), flush=True)
-server.handle_request()
+while True:
+    server.handle_request()
+    # A valid callback is the only request that prints parameters for Neovim.
+    # Keep the loop alive after invalid-state requests.
 ]]
 
     local python = python_executable()
