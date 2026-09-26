@@ -171,6 +171,68 @@ lua/huginn/
 
 ## Installation
 
+Huginn is installed as a Neovim plugin and uses [lazy.nvim](https://github.com/folke/lazy.nvim) as its plugin manager. Huginn can bootstrap lazy.nvim automatically, so you do not need to install lazy.nvim separately.
+
+### Requirements
+
+- Neovim **0.11+**
+- Git, available in `PATH`
+- Python and the tools used by your project (for example `pytest`, `ruff`, and `ty`)
+- An OpenAI-compatible AI endpoint only if AI features are enabled
+
+### Install with lazy.nvim
+
+Add Huginn to your lazy.nvim plugin specification:
+
+```lua
+{
+  "burenk0v/huginn.nvim",
+}
+```
+
+On the first startup, Huginn installs lazy.nvim into Neovim's data directory when it is missing and then loads its dependencies.
+
+You can also explicitly configure the plugin:
+
+```lua
+{
+  "burenk0v/huginn.nvim",
+  config = function()
+    require("huginn").setup()
+  end,
+}
+```
+
+If your Neovim configuration already calls `require("huginn").setup()`, do not call it a second time. The setup function is idempotent.
+
+### Project configuration
+
+Create a `.sdet.yaml` file in the root of the project. Start with the bundled `config/default.yaml` and change only the settings required by your project.
+
+For example:
+
+```bash
+cp config/default.yaml .sdet.yaml
+```
+
+The project configuration describes the Python package manager, test framework, test profiles, and AI provider. Machine- or developer-specific values belong in `huginn.local.yaml` in Neovim's configuration directory and should not be committed.
+
+### AI authentication
+
+AI integration is optional. Set `ai.enabled: false` when it is not required.
+
+For an OpenAI-compatible provider using OIDC, configure the provider in `.sdet.yaml` and run:
+
+```text
+:HuginnAIAuth
+```
+
+Authentication is performed through the browser using Authorization Code + PKCE. Credentials are stored outside the project configuration.
+
+### Verify the installation
+
+Restart Neovim and open a project containing `.sdet.yaml`. Check that the configuration loads without an error, then use the Huginn test keymaps or commands described above. For AI-enabled configurations, `:HuginnAIStatus` can be used to verify authentication status.
+
 With lazy.nvim:
 
 ```lua
