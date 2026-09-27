@@ -103,7 +103,7 @@ Pytest execution is configurable and is built from three independent pieces:
 - custom project commands are delegated to [overseer.nvim](https://github.com/stevearc/overseer.nvim), which owns task execution, output, task history and custom task definitions.
 - Huginn keeps only SDET-specific command generation from the selected framework and profiles.
 
-The default testing keymaps also include a Notepad++-style workflow: `F5` runs the default test profile, `Shift+F5` runs the current file, `Ctrl+F5` runs configured checks, `F6` selects a profile, `F9` runs the nearest test, `Ctrl+F9` debugs it, and `Shift+F6` prompts for test arguments. These mappings are configurable under `keymaps`, or the preset can be disabled with `keymaps.preset: none`.
+The default testing keymaps also include a Notepad++-style workflow: `F5` runs the default test profile, `Shift+F5` runs the current file, `Ctrl+F5` runs a project check task through Overseer, `F6` selects a profile, `F9` runs the nearest test, `Ctrl+F9` debugs it, and `Shift+F6` prompts for test arguments. These mappings are configurable under `keymaps`, or the preset can be disabled with `keymaps.preset: none`.
 
 Supported package-manager shortcuts are `poetry`, `uv`, `pipenv`, and `none`. Any other non-empty value is treated as an executable prefix.
 
@@ -181,6 +181,7 @@ lua/huginn/
 ├── ai/            # AI provider authentication and integration
 ├── framework/     # test framework registry and built-in adapters
 ├── testing.lua    # test command generation
+├── overseer.lua   # task execution integration
 ├── keymaps.lua    # editor actions
 ├── lazy.lua       # plugin declarations and integration setup
 └── init.lua       # entry point
