@@ -58,15 +58,6 @@ testing:
     integration:
       - tests/integration
 
-  # Optional full command overrides. Arguments from profiles/current-file runs are appended.
-  commands:
-    test:
-      - make
-      - test
-    check:
-      - make
-      - check
-
 keymaps:
   preset: notepadpp
   run: <F5>
@@ -109,9 +100,8 @@ Pytest execution is configurable and is built from three independent pieces:
 - `testing.framework` selects the test framework adapter;
 - `testing.frameworks.<name>.runner` provides framework-specific command inputs;
 - `testing.profiles` provides reusable argument lists;
-- `testing.commands` can override test/check executables completely, so projects can use commands such as `make test`, `just test`, or a custom wrapper without a new framework adapter.
-
-When `testing.commands.test` is configured, it replaces the framework-generated test command and profile/current-file arguments are appended. `testing.commands.check` provides a separate command for project checks; it is optional.
+- custom project commands are delegated to [overseer.nvim](https://github.com/stevearc/overseer.nvim), which owns task execution, output, task history and custom task definitions.
+- Huginn keeps only SDET-specific command generation from the selected framework and profiles.
 
 The default testing keymaps also include a Notepad++-style workflow: `F5` runs the default test profile, `Shift+F5` runs the current file, `Ctrl+F5` runs configured checks, `F6` selects a profile, `F9` runs the nearest test, `Ctrl+F9` debugs it, and `Shift+F6` prompts for test arguments. These mappings are configurable under `keymaps`, or the preset can be disabled with `keymaps.preset: none`.
 
@@ -126,12 +116,12 @@ Keymaps:
 - `<leader>tp` — choose a configured profile
 - `<leader>ta` — run tests with arbitrary arguments
 - `<leader>tr` — run the nearest test through neotest
-- `<leader>tc` — run configured checks
+- `<leader>tc` — run a project check task through Overseer
 - `<leader>td` — debug the nearest test
 
 The `<leader>` mappings remain available regardless of the Notepad++ preset.
 
-The command-generation layer is isolated in `lua/huginn/testing.lua`, while `lua/huginn/framework/` owns framework adapter registration, command integration, and optional Neotest integration. Huginn's Neotest setup no longer selects `neotest-python` directly.
+The command-generation layer is isolated in `lua/huginn/testing.lua`. `lua/huginn/overseer.lua` delegates execution to Overseer, while `lua/huginn/framework/` owns framework adapter registration and optional Neotest integration. Huginn no longer implements its own generic terminal/task runner.
 
 ## AI
 
@@ -231,6 +221,24 @@ You can also explicitly configure the plugin:
 ```
 
 If your Neovim configuration already calls `require("huginn").setup()`, do not call it a second time. The setup function is idempotent.
+
+### Project tasks with Overseer
+
+Huginn uses [overseer.nvim](https://github.com/stevearc/overseer.nvim) as the task runner. This keeps project-specific commands out of Huginn's configuration and gives tasks a common UI for output, restart, stop, history and composition.
+
+For project-specific test/check commands, define Overseer tasks in your Neovim configuration or use `.vscode/tasks.json`, which Overseer can read. Test tasks can use the standard `TEST` group. For check tasks, use the `huginn_check` tag in a custom Overseer template:
+
+```lua
+return {
+  name = "project checks",
+  tags = { "huginn_check" },
+  builder = function()
+    return { cmd = { "make", "check" } }
+  end,
+}
+```
+
+Then `Ctrl+F5` / `<leader>tc` opens the matching check task. Use `:OverseerRun` to select any project task directly.
 
 ### Project configuration
 
