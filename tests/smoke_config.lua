@@ -64,6 +64,8 @@ local cfg = config.get()
 assert_equal(cfg.testing.framework, "pytest", "framework")
 assert_equal(cfg.python.package_manager, "none", "package manager")
 assert_equal(cfg.python.formatter, "ruff", "formatter")
+assert_equal(cfg.ai.model, "company-model", "AI model is configured at the AI level")
+assert_equal(cfg.ai.providers.corporate.model, nil, "AI provider does not duplicate the model")
 assert_equal(cfg.testing.frameworks.pytest.runner, "pytest", "framework runner")
 
 local command = testing.build_profile_command("unit")
@@ -167,6 +169,25 @@ ai:
 ]])
 config.setup()
 assert_equal(config.get().ai.enabled, false, "missing AI provider endpoint disables AI")
+
+write(root .. "/project/.sdet.yaml", [[
+ai:
+  enabled: true
+  provider: corporate
+  model: company-model
+  providers:
+    corporate:
+      type: openai_compatible
+      endpoint: https://ai.example.test/v1
+      model: duplicate-model
+      auth:
+        type: oidc
+        issuer: https://login.example.test
+        client_id: huginn
+]])
+config.setup()
+assert_equal(config.get().ai.enabled, true, "provider model is ignored when validating the effective provider")
+assert_equal(config.get().ai.model, "gpt-5", "invalid provider model does not override global AI model")
 
 write(root .. "/project/.sdet.yaml", [[
 ai:
