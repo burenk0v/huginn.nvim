@@ -138,7 +138,7 @@ require("lazy").setup({
               },
               schema = {
                 model = {
-                  default = provider.model or cfg.ai.model,
+                  default = cfg.ai.model,
                 },
               },
             })
