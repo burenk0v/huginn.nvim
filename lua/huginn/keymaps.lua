@@ -1,35 +1,11 @@
 local config = require("huginn.config")
 local framework = require("huginn.framework")
-local testing = require("huginn.testing")
+local overseer = require("huginn.overseer")
 local auth = require("huginn.ai.auth")
 local usage = require("huginn.ai.usage")
 
 local M = {}
 local setup_done = false
-
-local function run_terminal(command)
-  if not command then
-    return
-  end
-  vim.cmd("botright split | terminal " .. table.concat(vim.tbl_map(vim.fn.shellescape, command), " "))
-end
-
-local function run_command(args)
-  run_terminal(testing.build_command(args))
-end
-
-local function run_check()
-  run_terminal(testing.build_check_command())
-end
-
-local function run_profile(name)
-  local command = testing.build_profile_command(name)
-  if not command then
-    vim.notify(("Huginn: unknown test profile '%s'"):format(name), vim.log.levels.ERROR)
-    return
-  end
-  run_terminal(command)
-end
 
 local function create_user_command(name, callback, opts)
   if vim.fn.exists(":" .. name) == 2 then
@@ -71,22 +47,11 @@ function M.setup()
 
   local cfg = config.get()
 
-  vim.keymap.set("n", "<leader>tt", function() run_profile("default") end, { desc = "Run default test profile" })
-  vim.keymap.set("n", "<leader>tf", function() run_command({ vim.fn.expand("%:p") }) end, { desc = "Run current test file" })
-  vim.keymap.set("n", "<leader>tp", function()
-    local names = vim.tbl_keys(config.get().testing.profiles)
-    table.sort(names)
-    vim.ui.select(names, { prompt = "Test profile" }, function(name)
-      if name then run_profile(name) end
-    end)
-  end, { desc = "Run test profile" })
-  vim.keymap.set("n", "<leader>ta", function()
-    local args = vim.fn.input("test args: ")
-    if args ~= "" then
-      run_command(testing.split_args(args))
-    end
-  end, { desc = "Run tests with arguments" })
-  vim.keymap.set("n", "<leader>tc", run_check, { desc = "Run configured checks" })
+  vim.keymap.set("n", "<leader>tt", overseer.run_default, { desc = "Run default test profile" })
+  vim.keymap.set("n", "<leader>tf", overseer.run_current_file, { desc = "Run current test file" })
+  vim.keymap.set("n", "<leader>tp", overseer.select_profile, { desc = "Run test profile" })
+  vim.keymap.set("n", "<leader>ta", overseer.run_with_args, { desc = "Run tests with arguments" })
+  vim.keymap.set("n", "<leader>tc", overseer.run_check, { desc = "Run check task" })
 
   vim.keymap.set("n", "<leader>tr", function()
     local name = config.get().testing.framework
@@ -107,16 +72,10 @@ function M.setup()
   end, { desc = "Debug nearest test" })
 
   if cfg.keymaps.preset == "notepadpp" then
-    set_optional_keymap("n", cfg.keymaps.run, function() run_profile("default") end, { desc = "Huginn: run default tests" })
-    set_optional_keymap("n", cfg.keymaps.run_file, function() run_command({ vim.fn.expand("%:p") }) end, { desc = "Huginn: run current test file" })
-    set_optional_keymap("n", cfg.keymaps.check, run_check, { desc = "Huginn: run configured checks" })
-    set_optional_keymap("n", cfg.keymaps.profile, function()
-      local names = vim.tbl_keys(config.get().testing.profiles)
-      table.sort(names)
-      vim.ui.select(names, { prompt = "Test profile" }, function(name)
-        if name then run_profile(name) end
-      end)
-    end, { desc = "Huginn: choose test profile" })
+    set_optional_keymap("n", cfg.keymaps.run, overseer.run_default, { desc = "Huginn: run default tests" })
+    set_optional_keymap("n", cfg.keymaps.run_file, overseer.run_current_file, { desc = "Huginn: run current test file" })
+    set_optional_keymap("n", cfg.keymaps.check, overseer.run_check, { desc = "Huginn: run check task" })
+    set_optional_keymap("n", cfg.keymaps.profile, overseer.select_profile, { desc = "Huginn: choose test profile" })
     set_optional_keymap("n", cfg.keymaps.nearest, function()
       local name = config.get().testing.framework
       if framework.has_neotest(name) then
@@ -129,12 +88,7 @@ function M.setup()
         require("neotest").run.run({ strategy = "dap" })
       end
     end, { desc = "Huginn: debug nearest test" })
-    set_optional_keymap("n", cfg.keymaps.args, function()
-      local args = vim.fn.input("test args: ")
-      if args ~= "" then
-        run_command(testing.split_args(args))
-      end
-    end, { desc = "Huginn: run tests with arguments" })
+    set_optional_keymap("n", cfg.keymaps.args, overseer.run_with_args, { desc = "Huginn: run tests with arguments" })
   end
 
   if not cfg.ai.enabled then

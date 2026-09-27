@@ -34,13 +34,6 @@ testing:
       - tests
     unit:
       - tests/unit
-  commands:
-    test:
-      - make
-      - test
-    check:
-      - make
-      - check
 keymaps:
   preset: notepadpp
   run: <F5>
@@ -78,10 +71,7 @@ local command = testing.build_profile_command("unit")
 assert_equal(table.concat(command, " "), "pytest tests/unit", "framework command")
 
 local file_command = testing.build_command({ "tests/test_example.py" })
-assert_equal(table.concat(file_command, " "), "make test tests/test_example.py", "custom test command")
-
-local check_command = testing.build_check_command()
-assert_equal(table.concat(check_command, " "), "make check", "custom check command")
+assert_equal(table.concat(file_command, " "), "pytest tests/test_example.py", "framework file command")
 
 assert_equal(cfg.keymaps.preset, "notepadpp", "keymap preset")
 assert_equal(cfg.keymaps.run, "<F5>", "Notepad++ run keymap")
@@ -216,8 +206,6 @@ assert_equal(defaults.testing.frameworks.pytest.runner, "pytest", "default YAML 
 assert_equal(#defaults.testing.profiles.default, 1, "default YAML contract profile")
 assert_equal(defaults.keymaps.preset, "notepadpp", "default keymap preset")
 assert_equal(defaults.keymaps.run, "<F5>", "default run keymap")
-assert_equal(defaults.testing.commands.test, nil, "custom test command is optional")
-assert_equal(defaults.testing.commands.check, nil, "custom check command is optional")
 assert_equal(defaults.ai.usage.budget_tokens, 0, "default AI budget")
 assert_equal(defaults.ai.usage.cost_per_million_tokens, 0, "default AI price")
 
