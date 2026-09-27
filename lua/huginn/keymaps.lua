@@ -1,6 +1,5 @@
 local config = require("huginn.config")
 local framework = require("huginn.framework")
-local testing = require("huginn.testing")
 local overseer = require("huginn.overseer")
 local auth = require("huginn.ai.auth")
 local usage = require("huginn.ai.usage")
