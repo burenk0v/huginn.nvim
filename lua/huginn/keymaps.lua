@@ -18,6 +18,10 @@ local function run_command(args)
   run_terminal(testing.build_command(args))
 end
 
+local function run_check()
+  run_terminal(testing.build_check_command())
+end
+
 local function run_profile(name)
   local command = testing.build_profile_command(name)
   if not command then
@@ -32,6 +36,12 @@ local function create_user_command(name, callback, opts)
     return
   end
   vim.api.nvim_create_user_command(name, callback, opts)
+end
+
+local function set_optional_keymap(mode, lhs, rhs, opts)
+  if lhs and lhs ~= "" then
+    vim.keymap.set(mode, lhs, rhs, opts)
+  end
 end
 
 local function ai_provider()
@@ -58,12 +68,11 @@ function M.setup()
   if setup_done then
     return
   end
+
+  local cfg = config.get()
+
   vim.keymap.set("n", "<leader>tt", function() run_profile("default") end, { desc = "Run default test profile" })
-
-  vim.keymap.set("n", "<leader>tf", function()
-    run_command({ vim.fn.expand("%:p") })
-  end, { desc = "Run current test file" })
-
+  vim.keymap.set("n", "<leader>tf", function() run_command({ vim.fn.expand("%:p") }) end, { desc = "Run current test file" })
   vim.keymap.set("n", "<leader>tp", function()
     local names = vim.tbl_keys(config.get().testing.profiles)
     table.sort(names)
@@ -71,13 +80,13 @@ function M.setup()
       if name then run_profile(name) end
     end)
   end, { desc = "Run test profile" })
-
   vim.keymap.set("n", "<leader>ta", function()
     local args = vim.fn.input("test args: ")
     if args ~= "" then
       run_command(testing.split_args(args))
     end
   end, { desc = "Run tests with arguments" })
+  vim.keymap.set("n", "<leader>tc", run_check, { desc = "Run configured checks" })
 
   vim.keymap.set("n", "<leader>tr", function()
     local name = config.get().testing.framework
@@ -97,7 +106,38 @@ function M.setup()
     require("neotest").run.run({ strategy = "dap" })
   end, { desc = "Debug nearest test" })
 
-  if not config.get().ai.enabled then
+  if cfg.keymaps.preset == "notepadpp" then
+    set_optional_keymap("n", cfg.keymaps.run, function() run_profile("default") end, { desc = "Huginn: run default tests" })
+    set_optional_keymap("n", cfg.keymaps.run_file, function() run_command({ vim.fn.expand("%:p") }) end, { desc = "Huginn: run current test file" })
+    set_optional_keymap("n", cfg.keymaps.check, run_check, { desc = "Huginn: run configured checks" })
+    set_optional_keymap("n", cfg.keymaps.profile, function()
+      local names = vim.tbl_keys(config.get().testing.profiles)
+      table.sort(names)
+      vim.ui.select(names, { prompt = "Test profile" }, function(name)
+        if name then run_profile(name) end
+      end)
+    end, { desc = "Huginn: choose test profile" })
+    set_optional_keymap("n", cfg.keymaps.nearest, function()
+      local name = config.get().testing.framework
+      if framework.has_neotest(name) then
+        require("neotest").run.run()
+      end
+    end, { desc = "Huginn: run nearest test" })
+    set_optional_keymap("n", cfg.keymaps.debug, function()
+      local name = config.get().testing.framework
+      if framework.supports_debug(name) then
+        require("neotest").run.run({ strategy = "dap" })
+      end
+    end, { desc = "Huginn: debug nearest test" })
+    set_optional_keymap("n", cfg.keymaps.args, function()
+      local args = vim.fn.input("test args: ")
+      if args ~= "" then
+        run_command(testing.split_args(args))
+      end
+    end, { desc = "Huginn: run tests with arguments" })
+  end
+
+  if not cfg.ai.enabled then
     setup_done = true
     return
   end
@@ -107,9 +147,7 @@ function M.setup()
 
   create_user_command("HuginnAIAuth", function()
     local name, provider = ai_provider()
-    if name and provider then
-      auth.login(name, provider)
-    end
+    if name and provider then auth.login(name, provider) end
   end, { desc = "Authenticate the configured Huginn AI provider" })
 
   create_user_command("HuginnAIStatus", function()
@@ -122,18 +160,15 @@ function M.setup()
     )
   end, { desc = "Show authentication status" })
 
-  create_user_command("HuginnAIUsage", function()
-    usage.status()
-  end, { desc = "Show AI token usage and cost" })
+  create_user_command("HuginnAIUsage", function() usage.status() end, { desc = "Show AI token usage and cost" })
 
   create_user_command("HuginnAILogout", function()
     local name = ai_provider()
-    if name then
-      if auth.logout(name) then
-        vim.notify(("Huginn: logged out from AI provider '%s'"):format(name), vim.log.levels.INFO)
-      end
+    if name and auth.logout(name) then
+      vim.notify(("Huginn: logged out from AI provider '%s'"):format(name), vim.log.levels.INFO)
     end
   end, { desc = "Remove locally stored Huginn AI credentials" })
+
   setup_done = true
 end
 

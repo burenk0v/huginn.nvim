@@ -15,6 +15,26 @@ testing:
   profiles:
     default:
       - tests
+  # Optional full command overrides. Arguments from profiles/current-file runs
+  # are appended to these commands.
+  commands:
+    # test:
+    #   - make
+    #   - test
+    # check:
+    #   - make
+    #   - check
+
+keymaps:
+  # Notepad++-style workflow shortcuts for running tests/checks.
+  preset: notepadpp
+  run: <F5>
+  run_file: <S-F5>
+  check: <C-F5>
+  profile: <F6>
+  nearest: <F9>
+  debug: <C-F9>
+  args: <S-F6>
 
 ai:
   enabled: true

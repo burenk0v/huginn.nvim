@@ -17,6 +17,17 @@ M.defaults = {
     profiles = {
       default = { "tests" },
     },
+    commands = {},
+  },
+  keymaps = {
+    preset = "notepadpp",
+    run = "<F5>",
+    run_file = "<S-F5>",
+    check = "<C-F5>",
+    profile = "<F6>",
+    nearest = "<F9>",
+    debug = "<C-F9>",
+    args = "<S-F6>",
   },
   ai = {
     enabled = true,
@@ -57,19 +68,66 @@ local function validate_string(value, path, allow_empty)
   return true
 end
 
+local function validate_string_list(value, path)
+  if type(value) ~= "table" or not vim.tbl_islist(value) then
+    return false, ("%s must be an array"):format(path)
+  end
+  for index, item in ipairs(value) do
+    local ok, err = validate_string(item, ("%s[%d]"):format(path, index))
+    if not ok then return false, err end
+  end
+  return true
+end
+
 local function validate_profiles(value)
   if type(value) ~= "table" or vim.tbl_islist(value) then
     return false, "testing.profiles must be an object"
   end
   for name, profile in pairs(value) do
     if type(name) ~= "string" or name == "" then return false, "testing.profiles keys must be non-empty strings" end
-    if type(profile) ~= "table" or not vim.tbl_islist(profile) then
-      return false, ("testing.profiles.%s must be an array"):format(name)
+    local ok, err = validate_string_list(profile, ("testing.profiles.%s"):format(name))
+    if not ok then return false, err end
+  end
+  return true
+end
+
+local function validate_commands(value)
+  if type(value) ~= "table" or vim.tbl_islist(value) then
+    return false, "testing.commands must be an object"
+  end
+  for name, command in pairs(value) do
+    if type(name) ~= "string" or name == "" then
+      return false, "testing.commands keys must be non-empty strings"
     end
-    for index, arg in ipairs(profile) do
-      local ok, err = validate_string(arg, ("testing.profiles.%s[%d]"):format(name, index))
-      if not ok then return false, err end
+    local ok, err = validate_string_list(command, ("testing.commands.%s"):format(name))
+    if not ok then return false, err end
+  end
+  return true
+end
+
+local function validate_keymaps(value)
+  if type(value) ~= "table" or vim.tbl_islist(value) then
+    return false, "keymaps must be an object"
+  end
+  local allowed = {
+    preset = true,
+    run = true,
+    run_file = true,
+    check = true,
+    profile = true,
+    nearest = true,
+    debug = true,
+    args = true,
+  }
+  for key, item in pairs(value) do
+    if not allowed[key] then
+      return false, ("unknown key 'keymaps.%s'"):format(key)
     end
+    local ok, err = validate_string(item, ("keymaps.%s"):format(key), key ~= "preset")
+    if not ok then return false, err end
+  end
+  if value.preset ~= nil and value.preset ~= "notepadpp" and value.preset ~= "none" then
+    return false, "keymaps.preset must be notepadpp or none"
   end
   return true
 end
@@ -158,13 +216,16 @@ local function validate_section(section, value)
   if type(value) ~= "table" or vim.tbl_islist(value) then return false, ("%s must be an object"):format(section) end
   local allowed = {
     python = { package_manager = true, formatter = true, linter = true, type_checker = true },
-    testing = { framework = true, frameworks = true, profiles = true },
+    testing = { framework = true, frameworks = true, profiles = true, commands = true },
     ai = { enabled = true, provider = true, model = true, instructions = true, providers = true, usage = true },
   }
   for key, item in pairs(value) do
     if not allowed[section][key] then return false, ("unknown key '%s.%s'"):format(section, key) end
     if section == "testing" and key == "profiles" then
       local ok, err = validate_profiles(item)
+      if not ok then return false, err end
+    elseif section == "testing" and key == "commands" then
+      local ok, err = validate_commands(item)
       if not ok then return false, err end
     elseif section == "testing" and key == "frameworks" then
       local ok, err = validate_frameworks(item)
@@ -198,6 +259,22 @@ local function validate_section(section, value)
   return true
 end
 
+local function validate(data)
+  if type(data) ~= "table" or vim.tbl_islist(data) then return false, "configuration root must be an object" end
+  local allowed = { python = true, testing = true, keymaps = true, ai = true }
+  for section, value in pairs(data) do
+    if not allowed[section] then return false, ("unknown top-level key '%s'"):format(section) end
+    if section == "keymaps" then
+      local ok, err = validate_keymaps(value)
+      if not ok then return false, err end
+    else
+      local ok, err = validate_section(section, value)
+      if not ok then return false, err end
+    end
+  end
+  return true
+end
+
 local function validate_effective_ai(ai)
   if not ai.enabled then
     return true
@@ -221,17 +298,6 @@ local function validate_effective_ai(ai)
     return false, ("ai.providers.%s.auth.type must be oidc"):format(ai.provider)
   end
 
-  return true
-end
-
-local function validate(data)
-  if type(data) ~= "table" or vim.tbl_islist(data) then return false, "configuration root must be an object" end
-  local allowed = { python = true, testing = true, ai = true }
-  for section, value in pairs(data) do
-    if not allowed[section] then return false, ("unknown top-level key '%s'"):format(section) end
-    local ok, err = validate_section(section, value)
-    if not ok then return false, err end
-  end
   return true
 end
 

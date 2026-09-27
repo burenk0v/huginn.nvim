@@ -17,10 +17,30 @@ local function command_prefix(manager)
   return { manager }
 end
 
+local function append_args(command, args)
+  for _, arg in ipairs(args or {}) do
+    if type(arg) ~= "string" then
+      return false
+    end
+    table.insert(command, arg)
+  end
+  return true
+end
+
 function M.build_command(args)
   local cfg = config.get()
-  local adapter = framework.get(cfg.testing.framework)
+  local custom = cfg.testing.commands and cfg.testing.commands.test
 
+  if custom then
+    local command = vim.deepcopy(custom)
+    if not append_args(command, args) then
+      vim.notify("Huginn: custom testing.commands.test contains an invalid argument", vim.log.levels.ERROR)
+      return nil
+    end
+    return command
+  end
+
+  local adapter = framework.get(cfg.testing.framework)
   if not adapter then
     vim.notify(
       ("Huginn: unknown test framework '%s'"):format(cfg.testing.framework),
@@ -51,6 +71,23 @@ function M.build_command(args)
     table.insert(command, arg)
   end
 
+  return command
+end
+
+function M.build_check_command(args)
+  local cfg = config.get()
+  local custom = cfg.testing.commands and cfg.testing.commands.check
+
+  if not custom then
+    vim.notify("Huginn: testing.commands.check is not configured", vim.log.levels.WARN)
+    return nil
+  end
+
+  local command = vim.deepcopy(custom)
+  if not append_args(command, args) then
+    vim.notify("Huginn: custom testing.commands.check contains an invalid argument", vim.log.levels.ERROR)
+    return nil
+  end
   return command
 end
 
