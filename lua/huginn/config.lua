@@ -172,7 +172,7 @@ local function validate_ai_providers(value)
       return false, "ai.providers must contain named objects"
     end
     for key in pairs(provider) do
-      if key ~= "type" and key ~= "endpoint" and key ~= "model" and key ~= "auth" then
+      if key ~= "type" and key ~= "endpoint" and key ~= "auth" then
         return false, ("unknown key 'ai.providers.%s.%s'"):format(name, key)
       end
     end
@@ -183,10 +183,6 @@ local function validate_ai_providers(value)
     end
     if provider.endpoint ~= nil then
       ok, err = validate_string(provider.endpoint, ("ai.providers.%s.endpoint"):format(name))
-      if not ok then return false, err end
-    end
-    if provider.model ~= nil then
-      ok, err = validate_string(provider.model, ("ai.providers.%s.model"):format(name))
       if not ok then return false, err end
     end
     if provider.auth then
