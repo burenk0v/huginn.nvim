@@ -58,6 +58,25 @@ testing:
     integration:
       - tests/integration
 
+  # Optional full command overrides. Arguments from profiles/current-file runs are appended.
+  commands:
+    test:
+      - make
+      - test
+    check:
+      - make
+      - check
+
+keymaps:
+  preset: notepadpp
+  run: <F5>
+  run_file: <S-F5>
+  check: <C-F5>
+  profile: <F6>
+  nearest: <F9>
+  debug: <C-F9>
+  args: <S-F6>
+
 ai:
   enabled: true
   provider: corporate
@@ -89,7 +108,12 @@ Pytest execution is configurable and is built from three independent pieces:
 - `python.package_manager` controls the environment prefix;
 - `testing.framework` selects the test framework adapter;
 - `testing.frameworks.<name>.runner` provides framework-specific command inputs;
-- `testing.profiles` provides reusable argument lists.
+- `testing.profiles` provides reusable argument lists;
+- `testing.commands` can override test/check executables completely, so projects can use commands such as `make test`, `just test`, or a custom wrapper without a new framework adapter.
+
+When `testing.commands.test` is configured, it replaces the framework-generated test command and profile/current-file arguments are appended. `testing.commands.check` provides a separate command for project checks; it is optional.
+
+The default testing keymaps also include a Notepad++-style workflow: `F5` runs the default test profile, `Shift+F5` runs the current file, `Ctrl+F5` runs configured checks, `F6` selects a profile, `F9` runs the nearest test, `Ctrl+F9` debugs it, and `Shift+F6` prompts for test arguments. These mappings are configurable under `keymaps`, or the preset can be disabled with `keymaps.preset: none`.
 
 Supported package-manager shortcuts are `poetry`, `uv`, `pipenv`, and `none`. Any other non-empty value is treated as an executable prefix.
 
@@ -102,7 +126,10 @@ Keymaps:
 - `<leader>tp` — choose a configured profile
 - `<leader>ta` — run tests with arbitrary arguments
 - `<leader>tr` — run the nearest test through neotest
+- `<leader>tc` — run configured checks
 - `<leader>td` — debug the nearest test
+
+The `<leader>` mappings remain available regardless of the Notepad++ preset.
 
 The command-generation layer is isolated in `lua/huginn/testing.lua`, while `lua/huginn/framework/` owns framework adapter registration, command integration, and optional Neotest integration. Huginn's Neotest setup no longer selects `neotest-python` directly.
 
