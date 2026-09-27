@@ -186,7 +186,8 @@ ai:
         client_id: huginn
 ]])
 config.setup()
-assert_equal(config.get().ai.enabled, true, "provider model is ignored when validating the effective provider")
+assert_equal(config.get().ai.enabled, true, "invalid provider model leaves defaults intact")
+assert_equal(config.get().ai.provider, "openai", "invalid provider model is rejected before merge")
 assert_equal(config.get().ai.model, "gpt-5", "invalid provider model does not override global AI model")
 
 write(root .. "/project/.sdet.yaml", [[
