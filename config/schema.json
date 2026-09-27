@@ -133,10 +133,6 @@
                 "type": "string",
                 "minLength": 1
               },
-              "model": {
-                "type": "string",
-                "minLength": 1
-              },
               "auth": {
                 "type": "object",
                 "additionalProperties": false,
