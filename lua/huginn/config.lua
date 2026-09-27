@@ -17,7 +17,6 @@ M.defaults = {
     profiles = {
       default = { "tests" },
     },
-    commands = {},
   },
   keymaps = {
     preset = "notepadpp",
@@ -86,20 +85,6 @@ local function validate_profiles(value)
   for name, profile in pairs(value) do
     if type(name) ~= "string" or name == "" then return false, "testing.profiles keys must be non-empty strings" end
     local ok, err = validate_string_list(profile, ("testing.profiles.%s"):format(name))
-    if not ok then return false, err end
-  end
-  return true
-end
-
-local function validate_commands(value)
-  if type(value) ~= "table" or vim.tbl_islist(value) then
-    return false, "testing.commands must be an object"
-  end
-  for name, command in pairs(value) do
-    if type(name) ~= "string" or name == "" then
-      return false, "testing.commands keys must be non-empty strings"
-    end
-    local ok, err = validate_string_list(command, ("testing.commands.%s"):format(name))
     if not ok then return false, err end
   end
   return true
@@ -216,16 +201,13 @@ local function validate_section(section, value)
   if type(value) ~= "table" or vim.tbl_islist(value) then return false, ("%s must be an object"):format(section) end
   local allowed = {
     python = { package_manager = true, formatter = true, linter = true, type_checker = true },
-    testing = { framework = true, frameworks = true, profiles = true, commands = true },
+    testing = { framework = true, frameworks = true, profiles = true },
     ai = { enabled = true, provider = true, model = true, instructions = true, providers = true, usage = true },
   }
   for key, item in pairs(value) do
     if not allowed[section][key] then return false, ("unknown key '%s.%s'"):format(section, key) end
     if section == "testing" and key == "profiles" then
       local ok, err = validate_profiles(item)
-      if not ok then return false, err end
-    elseif section == "testing" and key == "commands" then
-      local ok, err = validate_commands(item)
       if not ok then return false, err end
     elseif section == "testing" and key == "frameworks" then
       local ok, err = validate_frameworks(item)
