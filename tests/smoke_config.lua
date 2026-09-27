@@ -48,7 +48,6 @@ ai:
     corporate:
       type: openai_compatible
       endpoint: https://ai.example.test/v1
-      model: company-model
       auth:
         type: oidc
         issuer: https://login.example.test
@@ -187,7 +186,6 @@ ai:
     unused:
       type: openai_compatible
       endpoint: ""
-      model: ""
       auth:
         type: oidc
         issuer: https://login.example.test
