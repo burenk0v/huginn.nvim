@@ -28,6 +28,10 @@ vim.list_extend(neotest_dependencies, framework.neotest_debug_plugins())
 
 require("lazy").setup({
   {
+    "stevearc/overseer.nvim",
+    opts = {},
+  },
+  {
     "jedi-knights/yaml.nvim",
     lazy = false,
     opts = {},
